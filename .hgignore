@@ -1,0 +1,6 @@
+syntax: glob
+*.suo
+obj
+bin
+packages
+*.nupkg
