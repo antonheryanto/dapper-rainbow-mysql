@@ -68,7 +68,7 @@ namespace Dapper
             /// <param name="id"></param>
             /// <param name="data"></param>
             /// <returns></returns>
-            public int Update(int id, dynamic data)
+            public int Update(long id, dynamic data)
             {
                 List<string> paramNames = GetParamNames((object)data);
 
@@ -107,7 +107,7 @@ namespace Dapper
             /// </summary>
             /// <param name="id"></param>
             /// <returns></returns>
-            public bool Delete(int id)
+            public bool Delete(long id)
             {
                 return database.Execute("DELETE FROM " + TableName + " WHERE Id = @id", new { id }) > 0;
             }
@@ -117,7 +117,7 @@ namespace Dapper
             /// </summary>
             /// <param name="id"></param>
             /// <returns></returns>
-            public T Get(int id)
+            public T Get(long id)
             {
                 return database.Query<T>("SELECT * FROM " + TableName + " WHERE id = @id", new { id }).FirstOrDefault();
             }
