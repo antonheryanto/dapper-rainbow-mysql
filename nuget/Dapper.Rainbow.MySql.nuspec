@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Dapper.Rainbow.MySql</id>
-    <version>0.2.2</version>
+    <version>0.3.0</version>
     <title>Dapper.Rainbow.MySql</title>
     <authors>Sam Saffron, Anton Heryanto</authors>
     <owners>Sam Saffron, Anton Heryanto</owners>
@@ -17,12 +17,12 @@
       The implementation was extracted from http://data.stackexchange.com source at: http://code.google.com/p/stack-exchange-data-explorer/ .
       Data explorer uses "Rainbow" exclusively for all database access.
     </summary>
-    <releaseNotes>* * make id type as long to support all integer range type</releaseNotes>
+    <releaseNotes>add API for paging query</releaseNotes>
     <copyright>Copyright Sam Saffron, Anton Heryanto 2012</copyright>
     <tags>orm dapper micro-orm mysql</tags>
     <dependencies>
       <dependency id="Dapper" version="1.8" />
-      <dependency id="MySql.Data" version="6.4.4" />
+      <dependency id="MySql.Data" version="6.5.4" />
     </dependencies>
   </metadata>
   <files>
