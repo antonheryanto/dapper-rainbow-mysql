@@ -133,6 +133,11 @@ namespace Dapper
                 return database.Query<T>("SELECT * FROM " + TableName);
             }
 
+            public Page<T> Page(int page = 1, int itemsPerPage = 10)
+            {
+                return database.Page<T>("SELECT * FROM " + TableName, page, itemsPerPage: itemsPerPage);
+            }
+
             static ConcurrentDictionary<Type, List<string>> paramNameCache = new ConcurrentDictionary<Type, List<string>>();
             private static List<string> GetParamNames(object o)
             {
@@ -251,10 +256,10 @@ namespace Dapper
 
             if (!tableNameMap.TryGetValue(typeof(T), out name))
             {
-                name = likelyTableName;
+                name = likelyTableName.ToLower();
                 if (!TableExists(name))
                 {
-                    name = typeof(T).Name;
+                    name = typeof(T).Name.ToLower(); ;
                 }
 
                 tableNameMap[typeof(T)] = name;
@@ -264,8 +269,8 @@ namespace Dapper
 
         private bool TableExists(string name)
         {
-            return connection.Query("select 1 from INFORMATION_SCHEMA.TABLES where TABLE_NAME = @name AND TABLE_SCHEMA = @database", 
-                new { name, connection.Database }, transaction: transaction).Count() == 1;
+            return connection.Query("SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @name AND TABLE_SCHEMA = DATABASE()", 
+                new { name }, transaction: transaction).Count() == 1;
         }
 
         public int Execute(string sql, dynamic param = null)
