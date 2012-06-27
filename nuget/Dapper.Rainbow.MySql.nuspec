@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Dapper.Rainbow.MySql</id>
-    <version>0.3.1</version>
+    <version>0.4.0</version>
     <title>Dapper.Rainbow.MySql</title>
     <authors>Sam Saffron, Anton Heryanto</authors>
     <owners>Sam Saffron, Anton Heryanto</owners>
@@ -17,15 +17,15 @@
       The implementation was extracted from http://data.stackexchange.com source at: http://code.google.com/p/stack-exchange-data-explorer/ .
       Data explorer uses "Rainbow" exclusively for all database access.
     </summary>
-    <releaseNotes>fix long standing table naming problem, add table.page query</releaseNotes>
+    <releaseNotes>update to dapper 1.9, add page totalitems info, add sqlbuilder</releaseNotes>
     <copyright>Copyright Sam Saffron, Anton Heryanto 2012</copyright>
     <tags>orm dapper micro-orm mysql</tags>
     <dependencies>
-      <dependency id="Dapper" version="1.8" />
+      <dependency id="Dapper" version="1.9" />
       <dependency id="MySql.Data" version="6.5.4" />
     </dependencies>
   </metadata>
   <files>
-    <file src="..\src\Dapper.Rainbow.MySql\bin\Release\Dapper.Rainbow.MySql.dll" target="lib\net40" />
+    <file src="..\bin\Dapper.Rainbow.MySql.dll" target="lib\net40" />
   </files>
 </package>

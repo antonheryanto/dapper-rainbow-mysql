@@ -10,23 +10,27 @@ namespace Test
     [TestFixture]
     public class Test
     {
-        
-        public void TableName()
+        [Test]
+        public void SqlBuilderTest()
         {
-           
-            var a = db.Profiles.Get(1);
-            var r = db.Profiles.InsertOrUpdate(new { id = a.Id, a.Address, a.PostCode, city = "Kajangx", a.FacultyId });
-            var b = db.Profiles.Get(1);
-            Assert.AreEqual<string>(b.City, "Kajangx");
-        }
+            var sql = new SqlBuilder();
+            var count = sql.AddTemplate("SELECT COUNT(*) FROM profiles /**where**/");
+            var selector = sql.AddTemplate("SELECT * FROM profiles /**where**/ /**orderby**/");
+            sql.Where("id = @id", new { id = 1 });
+            sql.Where("city = @city", new { city = "Kajang" });
+            sql.OrderBy("id DESC");
+            sql.OrderBy("city");
+            var total = db.Query<long>(count.RawSql, count.Parameters).Single();
+            var rows = db.Query<Profile>(selector.RawSql, selector.Parameters);
+            Assert.Equals(total, 1);
+            Assert.Equals(rows.First().City, "Kajang");
+        }        
 
         [Test]
         public void PageTest()
-        {
-            var x = db.Page<Profile, User, Profile>("SELECT * FROM profiles p LEFT JOIN users u ON u.id=p.id", 
-                (p, u) => { p.User = u; return p; });
-            var y = x.Items;
-            Assert.Equals(0, 0);
+        {            
+            var x = db.Profiles.Page(1, 1);            
+            Assert.Equals(x.Items.First().City, "Kajang");
         }
 
         Db db;
@@ -37,6 +41,17 @@ namespace Test
                       System.Configuration.ConfigurationManager.ConnectionStrings[0].ConnectionString);
             cn.Open();
             db = Db.Init(cn, 30);
+            var x = db.Execute(@"CREATE TABLE IF NOT EXISTS profiles(
+                id INT(11),
+                address VARCHAR(32), 
+                postcode VARCHAR(32), 
+                city VARCHAR(32), 
+                facultyId INT(11),
+                PRIMARY KEY (id)     
+            );");
+            if (db.Profiles.All().Count() == 0) {
+                var id = db.Profiles.Insert(new { Address = "Alam Sari", City = "Kajang", PostCode = 43000 });
+            }
         }
     }
 
@@ -47,11 +62,11 @@ namespace Test
 
     public class Profile
     {
-        public uint Id { get; set; }                
+        public int Id { get; set; }                
         public string Address { get; set; }
         public string PostCode { get; set; }
         public string City { get; set; }
-        public uint FacultyId { get; set; }
+        public int FacultyId { get; set; }
         public User User { get; set; }
     }
 

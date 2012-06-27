@@ -135,7 +135,7 @@ namespace Dapper
 
             public Page<T> Page(int page = 1, int itemsPerPage = 10)
             {
-                return database.Page<T>("SELECT * FROM " + TableName, page, itemsPerPage: itemsPerPage);
+                return database.Page<T>("SELECT * FROM " + TableName + " ", page, itemsPerPage: itemsPerPage);
             }
 
             static ConcurrentDictionary<Type, List<string>> paramNameCache = new ConcurrentDictionary<Type, List<string>>();
@@ -371,7 +371,8 @@ namespace Dapper
                 Start = s,
                 Numbering = (page - 1) * itemsPerPage,
                 HasPrevious = page - 1 >= s,
-                HasNext = page + 1 <= totalPage
+                HasNext = page + 1 <= totalPage,
+                TotalItems = total
             };
             return p;
         }
@@ -434,6 +435,7 @@ namespace Dapper
         public int CurrentPage { get; set; }
         public long PageDisplayed { get; set; }
         public long TotalPage { get; set; }
+        public long TotalItems { get; set; }
         public int Start { get; set; }
         public int Numbering { get; set; }
         public bool HasPrevious { get; set; }
