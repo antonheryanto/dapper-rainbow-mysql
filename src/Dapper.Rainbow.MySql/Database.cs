@@ -120,12 +120,12 @@ namespace Dapper
             /// <returns></returns>
             public T Get(long id)
             {
-                return database.Query<T>("SELECT * FROM " + TableName + " WHERE id = @id", new { id }).FirstOrDefault();
+                return database.Query<T>("SELECT * FROM `" + TableName + "` WHERE id = @id", new { id }).FirstOrDefault();
             }
 
             public T First()
             {
-                return database.Query<T>("SELECT * FROM " + TableName + " LIMIT 1").FirstOrDefault();
+                return database.Query<T>("SELECT * FROM `" + TableName + "` LIMIT 1").FirstOrDefault();
             }
 
             public IEnumerable<T> All()
@@ -135,7 +135,7 @@ namespace Dapper
 
             public Page<T> Page(int page = 1, int itemsPerPage = 10)
             {
-                return database.Page<T>("SELECT * FROM " + TableName + " ", page, itemsPerPage: itemsPerPage);
+                return database.Page<T>("SELECT * FROM `" + TableName + "` ", page, itemsPerPage: itemsPerPage);
             }
 
             static ConcurrentDictionary<Type, List<string>> paramNameCache = new ConcurrentDictionary<Type, List<string>>();
