@@ -56,9 +56,9 @@ namespace Dapper
                 var o = (object)data;
                 List<string> paramNames = GetParamNames(o);
 
-                string cols = string.Join(",", paramNames);
+                string cols = string.Join("`,`", paramNames);
                 string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
-                var sql = "INSERT INTO " + TableName + " (" + cols + ") VALUES (" + cols_params + "); SELECT LAST_INSERT_ID()";
+                var sql = "INSERT INTO `" + TableName + "` (`" + cols + "`) VALUES (" + cols_params + "); SELECT LAST_INSERT_ID()";
 
                 return database.Query<long>(sql, o).Single();
             }
@@ -75,7 +75,7 @@ namespace Dapper
 
                 var builder = new StringBuilder();
                 builder.Append("UPDATE `").Append(TableName).Append("` SET ");
-                builder.AppendLine(string.Join(",", paramNames.Where(n => n != "Id").Select(p => p + "= @" + p)));
+                builder.AppendLine(string.Join(",", paramNames.Where(n => n != "Id").Select(p =>"`" + p + "`= @" + p)));
                 builder.Append("WHERE Id = @Id");
 
                 DynamicParameters parameters = new DynamicParameters(data);
@@ -94,10 +94,10 @@ namespace Dapper
                 var o = (object)data;
                 List<string> paramNames = GetParamNames(o);
 
-                string cols = string.Join(",", paramNames);
+                string cols = string.Join("`,`", paramNames);
                 string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
-                string cols_update = string.Join(",", paramNames.Select(p => p + " = @" + p));
-                var sql = @"INSERT INTO " + TableName + " (" + cols + ") VALUES (" + cols_params + 
+                string cols_update = string.Join(",", paramNames.Select(p => "`" + p + "` = @" + p));
+                var sql = @"INSERT INTO `" + TableName + "` (`" + cols + "`) VALUES (" + cols_params + 
                     ") ON DUPLICATE KEY UPDATE " + cols_update +"; SELECT LAST_INSERT_ID()";
 
                 return database.Query<long>(sql, o).Single();
@@ -110,7 +110,7 @@ namespace Dapper
             /// <returns></returns>
             public bool Delete(long id)
             {
-                return database.Execute("DELETE FROM " + TableName + " WHERE Id = @id", new { id }) > 0;
+                return database.Execute("DELETE FROM `" + TableName + "` WHERE Id = @id", new { id }) > 0;
             }
 
             /// <summary>
