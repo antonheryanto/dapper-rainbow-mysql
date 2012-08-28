@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Dapper.Rainbow.MySql</id>
-    <version>0.4.2</version>
+    <version>0.5.0</version>
     <title>Dapper.Rainbow.MySql</title>
     <authors>Sam Saffron, Anton Heryanto</authors>
     <owners>Sam Saffron, Anton Heryanto</owners>
@@ -18,6 +18,8 @@
       Data explorer uses "Rainbow" exclusively for all database access.
     </summary>
     <releaseNotes>
+        * initial where support only equal yet supported, multiple param threated as AND
+        * breaking API change parameter for InsertOrUpdate by specify the key like Update
         * update to dapper 1.10
         * fix table and column name escape char (enable use reserv keyword for name)
         * update to dapper 1.9, add page totalitems info, add sqlbuilder

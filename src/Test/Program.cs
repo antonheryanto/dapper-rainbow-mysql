@@ -9,6 +9,7 @@ namespace Test
     {
         public static void Main(string[] args)
         {
+            args = new string[] {"-showreport:n"};
             PetaTest.Runner.RunMain(args);            
         }
     }

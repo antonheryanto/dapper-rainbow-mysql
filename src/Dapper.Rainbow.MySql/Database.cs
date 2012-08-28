@@ -71,36 +71,52 @@ namespace Dapper
             /// <returns></returns>
             public int Update(long id, dynamic data)
             {
+                return Update(new { id }, data);
+            }
+
+            public int Update(dynamic key, dynamic data)
+            {
                 List<string> paramNames = GetParamNames((object)data);
+                string k = GetParamNames((object)key).Single();
 
-                var builder = new StringBuilder();
-                builder.Append("UPDATE `").Append(TableName).Append("` SET ");
-                builder.AppendLine(string.Join(",", paramNames.Where(n => n != "Id").Select(p =>"`" + p + "`= @" + p)));
-                builder.Append("WHERE Id = @Id");
+                var b = new StringBuilder();
+                b.Append("UPDATE `").Append(TableName).Append("` SET ");
+                b.AppendLine(string.Join(",", paramNames.Select(p =>"`" + p + "`= @" + p)));
+                b.Append("WHERE `").Append(k).Append("`= @").Append(k);
 
-                DynamicParameters parameters = new DynamicParameters(data);
-                parameters.Add("Id", id);
-
-                return database.Execute(builder.ToString(), parameters);
+                var parameters = new DynamicParameters(data);
+                parameters.AddDynamicParams(key);
+                return database.Execute(b.ToString(), parameters);
             }
 
             /// <summary>
-            /// Insert a row into the db or update when key is duplicated
+            /// Insert a row into the db or update when key is duplicated 
+            /// only for autoincrement key
             /// </summary>
             /// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
             /// <returns></returns>
-            public long InsertOrUpdate(dynamic data)
+            public long InsertOrUpdate(long id, dynamic data)
             {
-                var o = (object)data;
-                List<string> paramNames = GetParamNames(o);
+                return InsertOrUpdate(new { id }, data);
+            }
 
+            public long InsertOrUpdate(dynamic key, dynamic data)
+            {   
+                List<string> paramNames = GetParamNames((object)data);
+                string k = GetParamNames((object)key).Single();
+                
                 string cols = string.Join("`,`", paramNames);
                 string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
-                string cols_update = string.Join(",", paramNames.Select(p => "`" + p + "` = @" + p));
-                var sql = @"INSERT INTO `" + TableName + "` (`" + cols + "`) VALUES (" + cols_params + 
-                    ") ON DUPLICATE KEY UPDATE " + cols_update +"; SELECT LAST_INSERT_ID()";
-
-                return database.Query<long>(sql, o).Single();
+                string cols_update = string.Join(",", paramNames.Select(p => "`" + p + "` = @" + p));                
+                string key_update = "`" + k + "` = LAST_INSERT_ID(`" + k + "`)";
+                var b = new StringBuilder();
+                b.Append("INSERT INTO `").Append(tableName).Append("` (`").Append(cols).Append("`,`").Append(k).Append("`) VALUES (")
+                 .Append(cols_params).Append(", @").Append(k)
+                 .Append(") ON DUPLICATE KEY UPDATE ").Append("`").Append(k).Append("` = LAST_INSERT_ID(`").Append(k).Append("`)")
+                 .Append(", ").Append(cols_update).Append(";SELECT LAST_INSERT_ID()");                
+                var parameters = new DynamicParameters(data);
+                parameters.AddDynamicParams(key);
+                return database.Query<long>(b.ToString(), parameters).Single();
             }
 
             /// <summary>
@@ -123,19 +139,34 @@ namespace Dapper
                 return database.Query<T>("SELECT * FROM `" + TableName + "` WHERE id = @id", new { id }).FirstOrDefault();
             }
 
+            public T Get(dynamic where)
+            {
+                return (All(where) as IEnumerable <T>).FirstOrDefault();
+            }
+
             public T First()
             {
                 return database.Query<T>("SELECT * FROM `" + TableName + "` LIMIT 1").FirstOrDefault();
             }
 
-            public IEnumerable<T> All()
+            public IEnumerable<T> All(dynamic where = null)
             {
-                return database.Query<T>("SELECT * FROM " + TableName);
+                var sql = "SELECT * FROM " + TableName ;
+                if (where == null) return database.Query<T>(sql);
+                var paramNames = GetParamNames((object)where);
+                var w = string.Join(" AND ", paramNames.Select(p => "`" + p + "` = @" + p));
+                var parameters = new DynamicParameters(where);
+                return database.Query<T>(sql + " WHERE " + w , parameters);
             }
 
-            public Page<T> Page(int page = 1, int itemsPerPage = 10)
+            public Page<T> Page(int page = 1, int itemsPerPage = 10, dynamic where = null)
             {
-                return database.Page<T>("SELECT * FROM `" + TableName + "` ", page, itemsPerPage: itemsPerPage);
+                var sql = "SELECT * FROM `" + TableName + "` ";
+                if (where == null) return database.Page<T>(sql, page, itemsPerPage: itemsPerPage);
+                var paramNames = GetParamNames((object)where);
+                var w = string.Join(" AND ", paramNames.Select(p => "`" + p + "` = @" + p));
+                var parameters = new DynamicParameters(where);
+                return database.Page<T>(sql + " WHERE " + w, page, parameters, itemsPerPage: itemsPerPage);
             }
 
             static ConcurrentDictionary<Type, List<string>> paramNameCache = new ConcurrentDictionary<Type, List<string>>();

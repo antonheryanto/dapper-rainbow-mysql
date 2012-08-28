@@ -17,13 +17,14 @@ namespace Test
             var count = sql.AddTemplate("SELECT COUNT(*) FROM profiles /**where**/");
             var selector = sql.AddTemplate("SELECT * FROM profiles /**where**/ /**orderby**/");
             sql.Where("id = @id", new { id = 1 });
-            sql.Where("city = @city", new { city = "Kajang" });
+            sql.Where("city = @city", new { city = "Bangi" });
             sql.OrderBy("id DESC");
             sql.OrderBy("city");
             var total = db.Query<long>(count.RawSql, count.Parameters).Single();
             var rows = db.Query<Profile>(selector.RawSql, selector.Parameters);
+
             Assert.Equals(total, 1);
-            Assert.Equals(rows.First().City, "Kajang");
+            Assert.Equals(rows.First().City, "Bangi");
         }        
 
         [Test]
@@ -31,6 +32,18 @@ namespace Test
         {            
             var x = db.Profiles.Page(1, 1);            
             Assert.Equals(x.Items.First().City, "Kajang");
+        }
+
+        [Test]
+        public void InsertOrUpdate()
+        {
+            var c = db.Profiles.Get(1);
+            var id = db.Profiles.InsertOrUpdate(c.Id, new { City = "Bangi" });
+            var x = db.Profiles.Update(3, new { postcode = "43650" });
+            var profiles = db.Profiles.All(new { id }).ToList();
+            var profile = db.Profiles.Get(new { id });
+            var p = db.Profiles.Page(where: new { id });
+            Assert.Equals(p.Items.Count, 1);
         }
 
         Db db;
