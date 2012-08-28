@@ -126,7 +126,7 @@ namespace Dapper
                 string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
                 string cols_update = string.Join(",", paramNames.Select(p => "`" + p + "` = @" + p));                
                 var b = new StringBuilder();
-                b.Append("INSERT INTO `").Append(tableName).Append("` (`").Append(cols).Append("`) VALUES (")
+                b.Append("INSERT INTO `").Append(TableName).Append("` (`").Append(cols).Append("`) VALUES (")
                  .Append(cols_params).Append(") ON DUPLICATE KEY UPDATE ").Append(cols_update);
                 return database.Execute(b.ToString(), data);
             }
