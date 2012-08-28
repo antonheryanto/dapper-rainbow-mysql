@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Dapper.Rainbow.MySql</id>
-    <version>0.5.2</version>
+    <version>0.5.3</version>
     <title>Dapper.Rainbow.MySql</title>
     <authors>Sam Saffron, Anton Heryanto</authors>
     <owners>Sam Saffron, Anton Heryanto</owners>
