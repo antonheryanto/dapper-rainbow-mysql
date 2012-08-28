@@ -141,6 +141,14 @@ namespace Dapper
                 return database.Execute("DELETE FROM `" + TableName + "` WHERE Id = @id", new { id }) > 0;
             }
 
+            public bool Delete(dynamic where = null)
+            {
+                if (where == null) return database.Execute("TRUNCATE `" + TableName + "`") > 0;
+                var paramNames = GetParamNames((object)where);
+                var w = string.Join(" AND ", paramNames.Select(p => "`" + p + "` = @" + p));
+                return database.Execute("DELETE FROM `" + TableName + "` WHERE " + w, where) > 0;
+            }
+
             /// <summary>
             /// Grab a record with a particular Id from the DB 
             /// </summary>
@@ -156,9 +164,12 @@ namespace Dapper
                 return (All(where) as IEnumerable <T>).FirstOrDefault();
             }
 
-            public T First()
+            public T First(dynamic where = null)
             {
-                return database.Query<T>("SELECT * FROM `" + TableName + "` LIMIT 1").FirstOrDefault();
+                if (where == null) return database.Query<T>("SELECT * FROM `" + TableName + "` LIMIT 1").FirstOrDefault();
+                var paramNames = GetParamNames((object)where);
+                var w = string.Join(" AND ", paramNames.Select(p => "`" + p + "` = @" + p));                
+                return database.Query<T>("SELECT * FROM `" + TableName + "` WHERE " + w + " LIMIT 1").FirstOrDefault();
             }
 
             public IEnumerable<T> All(dynamic where = null)
@@ -166,9 +177,8 @@ namespace Dapper
                 var sql = "SELECT * FROM " + TableName ;
                 if (where == null) return database.Query<T>(sql);
                 var paramNames = GetParamNames((object)where);
-                var w = string.Join(" AND ", paramNames.Select(p => "`" + p + "` = @" + p));
-                var parameters = new DynamicParameters(where);
-                return database.Query<T>(sql + " WHERE " + w , parameters);
+                var w = string.Join(" AND ", paramNames.Select(p => "`" + p + "` = @" + p));                
+                return database.Query<T>(sql + " WHERE " + w , where);
             }
 
             public Page<T> Page(int page = 1, int itemsPerPage = 10, dynamic where = null)
@@ -176,9 +186,8 @@ namespace Dapper
                 var sql = "SELECT * FROM `" + TableName + "` ";
                 if (where == null) return database.Page<T>(sql, page, itemsPerPage: itemsPerPage);
                 var paramNames = GetParamNames((object)where);
-                var w = string.Join(" AND ", paramNames.Select(p => "`" + p + "` = @" + p));
-                var parameters = new DynamicParameters(where);
-                return database.Page<T>(sql + " WHERE " + w, page, parameters, itemsPerPage: itemsPerPage);
+                var w = string.Join(" AND ", paramNames.Select(p => "`" + p + "` = @" + p));                
+                return database.Page<T>(sql + " WHERE " + w, page, where, itemsPerPage: itemsPerPage);
             }
 
             static ConcurrentDictionary<Type, List<string>> paramNameCache = new ConcurrentDictionary<Type, List<string>>();
