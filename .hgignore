@@ -1,7 +1,9 @@
 syntax: glob
 *.suo
+*.nupkg
+*.userprefs
+*.config
+.DS_Store
 obj
 bin
 packages
-*.nupkg
-*.userprefs
