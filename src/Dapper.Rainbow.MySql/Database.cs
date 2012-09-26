@@ -74,18 +74,18 @@ namespace Dapper
                 return Update(new { id }, data);
             }
 
-            public int Update(dynamic key, dynamic data)
+            public int Update(dynamic where, dynamic data)
             {
                 List<string> paramNames = GetParamNames((object)data);
-                string k = GetParamNames((object)key).Single();
+				List<string> keys = GetParamNames((object)where);
 
                 var b = new StringBuilder();
                 b.Append("UPDATE `").Append(TableName).Append("` SET ");
                 b.AppendLine(string.Join(",", paramNames.Select(p =>"`" + p + "`= @" + p)));
-                b.Append("WHERE `").Append(k).Append("`= @").Append(k);
+				b.Append(" WHERE ").Append(string.Join(" AND ", keys.Select(p => "`" + p + "` = @" + p)));
 
                 var parameters = new DynamicParameters(data);
-                parameters.AddDynamicParams(key);
+                parameters.AddDynamicParams(where);
                 return database.Execute(b.ToString(), parameters);
             }
 

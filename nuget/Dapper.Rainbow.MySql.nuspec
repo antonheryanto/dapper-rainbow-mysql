@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Dapper.Rainbow.MySql</id>
-    <version>0.5.5</version>
+    <version>0.5.6</version>
     <title>Dapper.Rainbow.MySql</title>
     <authors>Sam Saffron, Anton Heryanto</authors>
     <owners>Sam Saffron, Anton Heryanto</owners>
@@ -18,6 +18,8 @@
       Data explorer uses "Rainbow" exclusively for all database access.
     </summary>
     <releaseNotes>
+        * fix update where clause to support multi param ( AND only)
+        * update to dapper 1.12.1
         * add first and delete where clause
         * fix error on tablename
         * provides insertOrupdate without key for non autoincrement table
@@ -27,7 +29,7 @@
     <copyright>Copyright Sam Saffron, Anton Heryanto 2012</copyright>
     <tags>orm dapper micro-orm mysql</tags>
     <dependencies>
-      <dependency id="Dapper" version="1.10" />
+      <dependency id="Dapper" version="1.12.1" />
       <dependency id="MySql.Data" version="6.5.4" />
     </dependencies>
   </metadata>
