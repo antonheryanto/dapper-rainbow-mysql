@@ -25,7 +25,7 @@ namespace Dapper
     /// <typeparam name="TDatabase"></typeparam>
     public abstract class Database<TDatabase> : IDisposable where TDatabase : Database<TDatabase>, new()
     {
-        public class Table<T,TId>
+        public class Table<T, TId>
         {
             internal Database<TDatabase> database;
             internal string tableName;
@@ -93,6 +93,7 @@ namespace Dapper
             /// Insert a row into the db or update when key is duplicated 
             /// only for autoincrement key
             /// </summary>
+			/// <param name="id"></param>
             /// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
             /// <returns></returns>
             public long InsertOrUpdate(TId id, dynamic data)
@@ -100,6 +101,13 @@ namespace Dapper
                 return InsertOrUpdate(new { id }, data);
             }
 
+			/// <summary>
+			/// Insert a row into the db or update when key is duplicated 
+			/// for autoincrement key
+			/// </summary>
+			/// <param name="where">Where clause</param>
+			/// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
+			/// <returns></returns>
             public long InsertOrUpdate(dynamic key, dynamic data)
             {   
                 List<string> paramNames = GetParamNames((object)data);
@@ -118,6 +126,11 @@ namespace Dapper
                 return database.Query<long>(b.ToString(), parameters).Single();
             }
 
+			/// <summary>
+			/// Insert a row into the db
+			/// </summary>
+			/// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
+			/// <returns></returns>
             public int InsertOrUpdate(dynamic data)
             {
                 List<string> paramNames = GetParamNames((object)data);
@@ -140,6 +153,11 @@ namespace Dapper
                 return database.Execute("DELETE FROM `" + TableName + "` WHERE Id = @id", new { id }) > 0;
             }
 
+			/// <summary>
+			/// Delete a record for the DB
+			/// </summary>
+			/// <param name="where"></param>
+			/// <returns></returns>
             public bool Delete(dynamic where = null)
             {
                 if (where == null) return database.Execute("TRUNCATE `" + TableName + "`") > 0;
@@ -190,6 +208,7 @@ namespace Dapper
             }
 
             static ConcurrentDictionary<Type, List<string>> paramNameCache = new ConcurrentDictionary<Type, List<string>>();
+
             internal static List<string> GetParamNames(object o)
             {
                 if (o is DynamicParameters)
