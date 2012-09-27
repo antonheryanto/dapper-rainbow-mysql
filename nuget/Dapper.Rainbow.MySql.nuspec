@@ -18,13 +18,11 @@
       Data explorer uses "Rainbow" exclusively for all database access.
     </summary>
     <releaseNotes>
+        * user defined type for table id
+        * sync with latest dapper.rainbow
+        * improve documentation for intelisense
         * fix update where clause to support multi param ( AND only)
         * update to dapper 1.12.1
-        * add first and delete where clause
-        * fix error on tablename
-        * provides insertOrupdate without key for non autoincrement table
-        * initial where support only equal yet supported, multiple param threated as AND
-        * breaking API change parameter for InsertOrUpdate by specify the key like Update        
     </releaseNotes>
     <copyright>Copyright Sam Saffron, Anton Heryanto 2012</copyright>
     <tags>orm dapper micro-orm mysql</tags>
@@ -35,5 +33,6 @@
   </metadata>
   <files>
     <file src="..\bin\Dapper.Rainbow.MySql.dll" target="lib\net40" />
+    <file src="..\bin\Dapper.Rainbow.MySql.xml" target="lib\net40" />
   </files>
 </package>

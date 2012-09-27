@@ -74,6 +74,12 @@ namespace Dapper
                 return Update(new { id }, data);
             }
 
+            /// <summary>
+            /// Update a record in the DB
+            /// </summary>
+            /// <param name="where"></param>
+            /// <param name="data"></param>
+            /// <returns></returns>
             public int Update(dynamic where, dynamic data)
             {
                 List<string> paramNames = GetParamNames((object)data);
@@ -105,7 +111,7 @@ namespace Dapper
 			/// Insert a row into the db or update when key is duplicated 
 			/// for autoincrement key
 			/// </summary>
-			/// <param name="where">Where clause</param>
+			/// <param name="key"></param>
 			/// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
 			/// <returns></returns>
             public long InsertOrUpdate(dynamic key, dynamic data)
@@ -176,11 +182,21 @@ namespace Dapper
                 return database.Query<T>("SELECT * FROM `" + TableName + "` WHERE id = @id", new { id }).FirstOrDefault();
             }
 
+            /// <summary>
+            /// Grab a record with where clause from the DB 
+            /// </summary>
+            /// <param name="where"></param>
+            /// <returns></returns>
             public T Get(dynamic where)
             {
                 return (All(where) as IEnumerable <T>).FirstOrDefault();
             }
 
+            /// <summary>
+            /// Grab a first record
+            /// </summary>
+            /// <param name="where"></param>
+            /// <returns></returns>
             public T First(dynamic where = null)
             {
                 if (where == null) return database.Query<T>("SELECT * FROM `" + TableName + "` LIMIT 1").FirstOrDefault();
@@ -189,6 +205,11 @@ namespace Dapper
                 return database.Query<T>("SELECT * FROM `" + TableName + "` WHERE " + w + " LIMIT 1").FirstOrDefault();
             }
 
+            /// <summary>
+            /// Return All record
+            /// </summary>
+            /// <param name="where"></param>
+            /// <returns></returns>
             public IEnumerable<T> All(dynamic where = null)
             {
                 var sql = "SELECT * FROM " + TableName ;
@@ -198,6 +219,13 @@ namespace Dapper
                 return database.Query<T>(sql + " WHERE " + w , where);
             }
 
+            /// <summary>
+            /// Return record in page object
+            /// </summary>
+            /// <param name="page"></param>
+            /// <param name="itemsPerPage"></param>
+            /// <param name="where"></param>
+            /// <returns></returns>
             public Page<T> Page(int page = 1, int itemsPerPage = 10, dynamic where = null)
             {
                 var sql = "SELECT * FROM `" + TableName + "` ";
@@ -241,7 +269,12 @@ namespace Dapper
         int commandTimeout;
         DbTransaction transaction;
 
-
+        /// <summary>
+        /// Initiate Database
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="commandTimeout"></param>
+        /// <returns></returns>
         public static TDatabase Init(DbConnection connection, int commandTimeout)
         {
             TDatabase db = new TDatabase();

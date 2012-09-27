@@ -52,7 +52,7 @@ namespace Test
 			var city = "Bangi";
 			var id = 1;
 			var facultyId = 1;
-			db.Profiles.Update(new { id, facultyId}, new { city });   
+			db.Profiles.Update(new { id, facultyId }, new { city });   
 			var p = db.Profiles.Get(new { id, facultyId });
 			Assert.Equals(p.City, city);
 		}
