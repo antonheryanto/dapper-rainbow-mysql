@@ -34,7 +34,25 @@ namespace Test
             Assert.Equals(x.Items.First().City, "Kajang");
         }
 
-        //[Test]
+		[Test]
+		public void CountTest ()
+		{
+			var x = db.Query("SELECT COUNT(*) FROM profiles").Single() as IDictionary<string, object>;
+			var y = x.Values.Single().GetType();
+			Assert.Equals(typeof(long), y);
+		}
+
+		[Test]
+		public void LastId ()
+		{
+			var r = db.Query("SELECT LAST_INSERT_ID()").Single() as IDictionary<string, object>;
+			var t = r.Values.Single().GetType();
+			var c = typeof(long);
+			Assert.Equals(c, t);
+		}
+
+
+        [Test]
         public void InsertOrUpdate()
         {
             var c = db.Profiles.Get(1);

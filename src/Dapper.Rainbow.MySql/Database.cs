@@ -59,8 +59,8 @@ namespace Dapper
                 string cols = string.Join("`,`", paramNames);
                 string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
                 var sql = "INSERT INTO `" + TableName + "` (`" + cols + "`) VALUES (" + cols_params + "); SELECT LAST_INSERT_ID()";
-
-                return database.Query<long>(sql, o).Single();
+				var id = database.Query(sql, o).Single() as IDictionary<string, object>;
+				return Convert.ToInt64(id.Values.Single());
             }
 
             /// <summary>
@@ -129,7 +129,8 @@ namespace Dapper
                  .Append(", ").Append(cols_update).Append(";SELECT LAST_INSERT_ID()");                
                 var parameters = new DynamicParameters(data);
                 parameters.AddDynamicParams(key);
-                return database.Query<long>(b.ToString(), parameters).Single();
+				var id = database.Query(b.ToString(), parameters).Single() as IDictionary<string, object>;
+				return Convert.ToInt64(id.Values.Single());
             }
 
 			/// <summary>
