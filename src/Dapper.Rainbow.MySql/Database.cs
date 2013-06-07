@@ -269,6 +269,7 @@ namespace Dapper
         DbConnection connection;
         int commandTimeout;
         DbTransaction transaction;
+		bool lowerCase = true;
 
         /// <summary>
         /// Initiate Database
@@ -276,19 +277,20 @@ namespace Dapper
         /// <param name="connection"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static TDatabase Init(DbConnection connection, int commandTimeout)
+        public static TDatabase Init(DbConnection connection, int commandTimeout, bool lowerCase = true)
         {
             TDatabase db = new TDatabase();
-            db.InitDatabase(connection, commandTimeout);
+            db.InitDatabase(connection, commandTimeout, lowerCase);
             return db;
         }
 
         internal static Action<TDatabase> tableConstructor;
 
-        internal void InitDatabase(DbConnection connection, int commandTimeout)
+        internal void InitDatabase(DbConnection connection, int commandTimeout, bool lowerCase)
         {
             this.connection = connection;
             this.commandTimeout = commandTimeout;
+			this.lowerCase = lowerCase;
             if (tableConstructor == null)
             {
 				tableConstructor = CreateTableConstructorForTable();
@@ -372,10 +374,10 @@ namespace Dapper
 
             if (!tableNameMap.TryGetValue(typeof(T), out name))
             {
-                name = likelyTableName.ToLower();
+				name = !lowerCase ? likelyTableName : likelyTableName.ToLower();
                 if (!TableExists(name))
                 {
-                    name = typeof(T).Name.ToLower(); ;
+					name = !lowerCase ? typeof(T).Name : typeof(T).Name.ToLower();
                 }
 
                 tableNameMap[typeof(T)] = name;

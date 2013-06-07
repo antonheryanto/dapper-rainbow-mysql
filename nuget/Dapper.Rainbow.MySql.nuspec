@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Dapper.Rainbow.MySql</id>
-    <version>0.5.7</version>
+    <version>0.5.8</version>
     <title>Dapper.Rainbow.MySql</title>
     <authors>Sam Saffron, Anton Heryanto</authors>
     <owners>Sam Saffron, Anton Heryanto</owners>
@@ -18,14 +18,14 @@
       Data explorer uses "Rainbow" exclusively for all database access.
     </summary>
     <releaseNotes>
-        * fix diffrent type of last_insert_id() with mariadb and possible perconadb  
-        * update mysql connector to latest 6.6.4
+    	* update to dapper 1.13 and mysql. 6.6.5
+    	* add option lowerCase to case sensitive
     </releaseNotes>
-    <copyright>Copyright Sam Saffron, Anton Heryanto 2012</copyright>
+    <copyright>Copyright Sam Saffron, Anton Heryanto 2013</copyright>
     <tags>orm dapper micro-orm mysql</tags>
     <dependencies>
-      <dependency id="Dapper" version="1.12.1" />
-      <dependency id="MySql.Data" version="6.6.4" />
+      <dependency id="Dapper" version="1.13" />
+      <dependency id="MySql.Data" version="6.6.5" />
     </dependencies>
   </metadata>
   <files>

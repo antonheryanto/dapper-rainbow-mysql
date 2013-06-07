@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using PetaTest;
 using Dapper;
+using System.Dynamic;
 
 namespace Test
 {
@@ -34,7 +35,7 @@ namespace Test
             Assert.Equals(x.Items.First().City, "Kajang");
         }
 
-		[Test]
+		//[Test]
 		public void CountTest ()
 		{
 			var x = db.Query("SELECT COUNT(*) FROM profiles").Single() as IDictionary<string, object>;
@@ -42,7 +43,7 @@ namespace Test
 			Assert.Equals(typeof(long), y);
 		}
 
-		[Test]
+		//[Test]
 		public void LastId ()
 		{
 			var r = db.Query("SELECT LAST_INSERT_ID()").Single() as IDictionary<string, object>;
@@ -52,8 +53,8 @@ namespace Test
 		}
 
 
-        [Test]
-        public void InsertOrUpdate()
+        //[Test]
+        public void InsertOrUpdateWithId()
         {
             var c = db.Profiles.Get(1);
             var id = db.Profiles.InsertOrUpdate(c.Id, new { City = "Bangi" });
@@ -64,7 +65,15 @@ namespace Test
             Assert.Equals(p.Items.Count, 1);
         }
 
-		[Test]
+		//[Test]
+		public void InsertOrUpdateWithoutId()
+		{
+			var x = db.ReportNote.InsertOrUpdate(new { userId = 1, sessionId = 1, note = "note", noterId = 2 });
+			var y = db.ReportNote.Get(new { userId = 1 });
+			Assert.Equals(0,0);
+		}
+
+		//[Test]
 		public void UpdateTest()
 		{            
 			var city = "Bangi";
@@ -73,6 +82,17 @@ namespace Test
 			db.Profiles.Update(new { id, facultyId }, new { city });   
 			var p = db.Profiles.Get(new { id, facultyId });
 			Assert.Equals(p.City, city);
+		}
+
+		[Test]
+		public void DynamicParametersTest()
+		{
+			var p = new DynamicExpando (new { city = "Bangi", facultyId = 1 });
+			p.AddRange (new { Address = "add late", PostCode = "43650" });
+			dynamic o = new ExpandoObject ();
+			o.City = "Bangi";
+			var x = db.Query (@"SELECT * FROM profiles WHERE city=@city", o);
+			Assert.Equals (0, 0);
 		}
 
         Db db;
@@ -101,6 +121,7 @@ namespace Test
     public class Db : Database<Db>
     {
         public Table<Profile> Profiles { get; set; }
+		public Table<ReportNote> ReportNote { get; set; }
     }
 
     public class Profile
@@ -118,4 +139,41 @@ namespace Test
         public uint Id { get; set; }
         public string Name { get; set; }
     }
+
+	public class ReportNote
+	{
+		public int UserId { get; set; }
+		public int SessionId { get; set; }
+		public int NoterId { get; set; }
+		public string Note { get; set; }
+		public DateTime Changed { get; set; }
+		
+		public override string ToString ()
+		{
+			return Note;
+		}
+	}
+
+	public class DynamicExpando : DynamicObject
+	{
+		IDictionary<string, object> members = new Dictionary<string, object> (StringComparer.InvariantCultureIgnoreCase);
+
+		public DynamicExpando (dynamic param)
+		{
+			AddRange (param);
+		}
+
+		public void AddRange(dynamic param)
+		{
+			if (param as object == null) return;
+			foreach (var property in System.ComponentModel.TypeDescriptor.GetProperties(param.GetType()))
+				members.Add(property.Name, property.GetValue(param));
+		}
+
+		public override bool TryGetMember(GetMemberBinder binder, out object result)
+		{
+			string name = binder.Name.ToLower();
+			return members.TryGetValue(name, out result);
+		}
+	}
 }
