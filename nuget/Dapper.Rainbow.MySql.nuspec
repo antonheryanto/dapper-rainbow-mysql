@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Dapper.Rainbow.MySql</id>
-    <version>0.5.8</version>
+    <version>0.6.1</version>
     <title>Dapper.Rainbow.MySql</title>
     <authors>Sam Saffron, Anton Heryanto</authors>
     <owners>Sam Saffron, Anton Heryanto</owners>
@@ -18,6 +18,7 @@
       Data explorer uses "Rainbow" exclusively for all database access.
     </summary>
     <releaseNotes>
+    	* change DbConnection to IDbConnection in order to integrate well with ServiceStack
     	* update to dapper 1.13 and mysql. 6.6.5
     	* add option lowerCase to case sensitive
     </releaseNotes>

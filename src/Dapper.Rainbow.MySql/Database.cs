@@ -266,9 +266,9 @@ namespace Dapper
 			}
 		}
 
-        DbConnection connection;
+        IDbConnection connection;
         int commandTimeout;
-        DbTransaction transaction;
+        IDbTransaction transaction;
 		bool lowerCase = true;
 
         /// <summary>
@@ -277,7 +277,7 @@ namespace Dapper
         /// <param name="connection"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static TDatabase Init(DbConnection connection, int commandTimeout, bool lowerCase = true)
+        public static TDatabase Init(IDbConnection connection, int commandTimeout, bool lowerCase = true)
         {
             TDatabase db = new TDatabase();
             db.InitDatabase(connection, commandTimeout, lowerCase);
@@ -286,7 +286,7 @@ namespace Dapper
 
         internal static Action<TDatabase> tableConstructor;
 
-        internal void InitDatabase(DbConnection connection, int commandTimeout, bool lowerCase)
+        internal void InitDatabase(IDbConnection connection, int commandTimeout, bool lowerCase)
         {
             this.connection = connection;
             this.commandTimeout = commandTimeout;
