@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Dapper.Rainbow.MySql</id>
-    <version>0.6.1</version>
+    <version>0.7.0</version>
     <title>Dapper.Rainbow.MySql</title>
     <authors>Sam Saffron, Anton Heryanto</authors>
     <owners>Sam Saffron, Anton Heryanto</owners>
@@ -18,19 +18,18 @@
       Data explorer uses "Rainbow" exclusively for all database access.
     </summary>
     <releaseNotes>
-    	* change DbConnection to IDbConnection in order to integrate well with ServiceStack
-    	* update to dapper 1.13 and mysql. 6.6.5
-    	* add option lowerCase to case sensitive
+    	* update to dapper 1.4 and mysql. 6.9.6
+    	* sync with upstream dapper.rainbow, add ignorePropertyAttribute
     </releaseNotes>
-    <copyright>Copyright Sam Saffron, Anton Heryanto 2013</copyright>
+    <copyright>Copyright Sam Saffron, Anton Heryanto 2015</copyright>
     <tags>orm dapper micro-orm mysql</tags>
     <dependencies>
-      <dependency id="Dapper" version="1.13" />
-      <dependency id="MySql.Data" version="6.6.5" />
+      <dependency id="Dapper" version="1.4" />
+      <dependency id="MySql.Data" version="6.9.6" />
     </dependencies>
   </metadata>
   <files>
-    <file src="..\bin\Dapper.Rainbow.MySql.dll" target="lib\net40" />
-    <file src="..\bin\Dapper.Rainbow.MySql.xml" target="lib\net40" />
+    <file src="bin/Dapper.Rainbow.MySql.dll" target="lib/net45" />
+    <file src="bin/Dapper.Rainbow.MySql.xml" target="lib/net45" />
   </files>
 </package>

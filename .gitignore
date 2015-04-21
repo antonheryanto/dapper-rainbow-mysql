@@ -1,0 +1,8 @@
+*.userprefs
+*.config
+*.nupkg
+.hg
+.hgignore
+bin
+obj
+packages

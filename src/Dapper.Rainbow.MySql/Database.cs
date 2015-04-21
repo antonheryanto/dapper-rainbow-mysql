@@ -55,6 +55,7 @@ namespace Dapper
             {
                 var o = (object)data;
                 List<string> paramNames = GetParamNames(o);
+				paramNames.Remove("Id");
 
                 string cols = string.Join("`,`", paramNames);
                 string cols_params = string.Join(",", paramNames.Select(p => "@" + p));
@@ -251,7 +252,12 @@ namespace Dapper
                     paramNames = new List<string>();
                     foreach (var prop in o.GetType().GetProperties(BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public))
                     {
-                        paramNames.Add(prop.Name);
+						var attribs = prop.GetCustomAttributes(typeof(IgnorePropertyAttribute), true);
+						var attr = attribs.FirstOrDefault() as IgnorePropertyAttribute;
+						if (attr==null || (attr != null && !attr.Value))
+						{
+							paramNames.Add(prop.Name);
+						}
                     }
                     paramNameCache[o.GetType()] = paramNames;
                 }
@@ -276,6 +282,7 @@ namespace Dapper
         /// </summary>
         /// <param name="connection"></param>
         /// <param name="commandTimeout"></param>
+		/// <param name="lowercase"></param>
         /// <returns></returns>
         public static TDatabase Init(IDbConnection connection, int commandTimeout, bool lowerCase = true)
         {
