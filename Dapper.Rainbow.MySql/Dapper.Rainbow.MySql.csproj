@@ -45,6 +45,7 @@
     <Reference Include="MySql.Data">
       <HintPath>..\packages\MySql.Data.6.9.6\lib\net45\MySql.Data.dll</HintPath>
     </Reference>
+    <Reference Include="System.Configuration" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Database.cs" />
@@ -54,6 +55,7 @@
     <Compile Include="IgnorePropertyAttribute.cs" />
     <Compile Include="Attributes.cs" />
     <Compile Include="DapperWrapper.cs" />
+    <Compile Include="TableColumn.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

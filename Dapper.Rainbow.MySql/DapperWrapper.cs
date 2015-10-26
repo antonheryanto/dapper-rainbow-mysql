@@ -7,17 +7,17 @@ namespace Dapper
 {
 	public class DapperWrapper
 	{
-		private Object poco;
-		public DapperWrapper(Object poco){
+		private Type poco;
+		public DapperWrapper(Type poco){
 			this.poco = poco;
 		}
 
 		private IEnumerable<PropertyInfo> getReadableProperties(){
-			return poco.GetType ().GetProperties ().Where (e => e.CanRead == true);
+			return poco.GetProperties ().Where (e => e.CanRead == true);
 		}
 
 		private PropertyInfo getPropertyInfo(Type t){
-			var props = poco.GetType().GetProperties ().AsList();
+			var props = poco.GetProperties ().AsList();
 			return props.Where (e => e.GetCustomAttributes(true).AsList().Where(j => j.GetType() == typeof(PrimaryKey)).Count() == 1).FirstOrDefault();
 		}
 
@@ -31,7 +31,7 @@ namespace Dapper
 
 		public List<TableColumn> getTableColumns(){
 			var columns = new List<TableColumn> ();
-			getReadableProperties().ToList().ForEach(e => columns.Add(new TableColumn(e.Name,e.GetType())));
+			getReadableProperties().ToList().ForEach(e => columns.Add(MySqlColumnFactory.TableColumnFromProperty(e)));
 			return columns;
 		}
 	}

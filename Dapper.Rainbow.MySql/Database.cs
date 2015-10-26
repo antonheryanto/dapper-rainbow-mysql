@@ -19,6 +19,10 @@ using System.Text.RegularExpressions;
 
 namespace Dapper
 {
+	public class TableAlreadyExistsException : Exception {
+		public TableAlreadyExistsException(string tablename) : base(tablename){ }
+	}
+
     /// <summary>
     /// A container for a database, assumes all the tables have an Id column named Id
     /// </summary>
@@ -45,6 +49,38 @@ namespace Dapper
                     return tableName;
                 }
             }
+
+			/// <summary>
+			/// Creates the table, or throws an exception if table already exists.
+			/// </summary>
+			/// <returns></returns>
+			public void Create(){
+				var sql = "create table " + TableName + " (";
+				var wrapper = new DapperWrapper(typeof(T));
+
+				bool first = true;
+				foreach (var prop in wrapper.getTableColumns()) {
+					sql += (first ? "" : ", ");
+					sql += prop.getMySql();
+					first = false;
+				}
+
+				sql += ");";
+
+				if (database.TableExists (tableName))
+					throw new TableAlreadyExistsException (tableName);
+				
+
+				database.Execute (sql);
+			}
+
+			/// <summary>
+			/// Drop the table
+			/// </summary>
+			/// <returns></returns>
+			public void Drop(){
+				database.Execute ("drop table if exists " + TableName + ";");
+			}
 
             /// <summary>
             /// Insert a row into the db

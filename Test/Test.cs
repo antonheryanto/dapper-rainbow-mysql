@@ -8,6 +8,54 @@ using System.Dynamic;
 
 namespace Test
 {
+	[TestFixture]
+	public class InitializerTest
+	{
+		class UserDB : Database<UserDB>
+		{
+			public Table<User> Users { get; set; }
+		}
+
+		class User {
+			public int Id { get; set; }
+		}
+
+		[TestFixtureSetUp]
+		public void Setup()
+		{            
+			var cn = new MySql.Data.MySqlClient.MySqlConnection(
+				System.Configuration.ConfigurationManager.ConnectionStrings[0].ConnectionString);
+			cn.Open();
+			db = UserDB.Init(cn, 30);
+		}
+			
+		UserDB db;
+		[Test]
+		public void CreateTable(){
+			db.Execute ("drop table if exists user;");
+			db.Users.Create ();
+			db.Execute ("drop table if exists user;");
+		}
+
+		[Test]
+		public void DeleteTable(){
+			db.Users.Drop ();
+		}
+
+		[Test]
+		public void TableAlreadyExistsExceptionTest(){
+			db.Users.Create ();
+			Assert.Throws<TableAlreadyExistsException>(db.Users.Create);
+		}
+	}
+
+
+
+
+
+
+
+
     [TestFixture]
     public class Test
     {
@@ -83,7 +131,7 @@ namespace Test
 			var p = db.Profiles.Get(new { id, facultyId });
 			Assert.Equals(p.City, city);
 		}
-
+						
 		[Test]
 		public void DynamicParametersTest()
 		{
@@ -94,6 +142,7 @@ namespace Test
 			var x = db.Query (@"SELECT * FROM profiles WHERE city=@city", o);
 			Assert.Equals (0, 0);
 		}
+
 
         Db db;
         [TestFixtureSetUp]
@@ -126,7 +175,7 @@ namespace Test
 
     public class Profile
     {
-        public int Id { get; set; }                
+		public int Id { get; set; }
         public string Address { get; set; }
         public string PostCode { get; set; }
         public string City { get; set; }
