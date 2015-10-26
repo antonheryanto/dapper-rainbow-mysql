@@ -70,7 +70,7 @@ namespace Test
 		{
 			var x = db.ReportNote.InsertOrUpdate(new { userId = 1, sessionId = 1, note = "note", noterId = 2 });
 			var y = db.ReportNote.Get(new { userId = 1 });
-			Assert.Equals(0,0);
+			Assert.Equals(x,y);
 		}
 
 		//[Test]
