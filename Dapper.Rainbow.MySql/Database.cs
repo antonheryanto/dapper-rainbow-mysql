@@ -49,13 +49,9 @@ namespace Dapper
                     return tableName;
                 }
             }
-
-			/// <summary>
-			/// Creates the table, or throws an exception if table already exists.
-			/// </summary>
-			/// <returns></returns>
-			public void Create(){
-				var sql = "create table " + TableName + " (";
+				
+			private void CreateTable(){
+				var sql = "create table if not exists " + TableName + " (";
 				var wrapper = new DapperWrapper(typeof(T));
 
 				bool first = true;
@@ -67,11 +63,25 @@ namespace Dapper
 
 				sql += ");";
 
+				database.Execute (sql);
+			}
+
+			/// <summary>
+			/// Creates the table, or throws an exception if table already exists.
+			/// </summary>
+			/// <returns></returns>
+			public void Create(){
 				if (database.TableExists (tableName))
 					throw new TableAlreadyExistsException (tableName);
-				
+				CreateTable ();
+			}
 
-				database.Execute (sql);
+			/// <summary>
+			/// Creates the table if it doesn't already exist
+			/// </summary>
+			/// <returns></returns>
+			public void TryCreate(){
+				CreateTable ();
 			}
 
 			/// <summary>

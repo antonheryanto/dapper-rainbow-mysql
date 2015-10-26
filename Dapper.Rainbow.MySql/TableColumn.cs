@@ -8,9 +8,11 @@ namespace Dapper
 	{
 		public static TableColumn TableColumnFromProperty(PropertyInfo pi){
 			if (pi.PropertyType == typeof(int)) {
-				return new TableColumn (pi.Name, "int");
+				return new TableColumn (pi.Name, "INT");
 			} else if(pi.PropertyType == typeof(string)){
-				return new TableColumn (pi.Name, "text");
+				return new TableColumn (pi.Name, "TEXT");
+			} else if(pi.PropertyType == typeof(DateTime)){
+				return new TableColumn (pi.Name, "DATETIME");
 			} else {
 				throw new NotSupportedException (pi.GetType().ToString());
 			}
