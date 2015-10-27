@@ -14,10 +14,9 @@ namespace Test
 		{
 			public Table<User> Users { get; set; }
 		}
-
+			
 		class User {
 			[PrimaryKey]
-			[NotNull]
 			public int Id { get; set; }
 		}
 

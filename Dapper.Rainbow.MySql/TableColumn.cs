@@ -21,17 +21,46 @@ namespace Dapper
 				}
 			}
 
-			if (pi.PropertyType == typeof(int)) {
+			if (pi.PropertyType == typeof(int) || pi.PropertyType == typeof(Int32)) {
 				return new TableColumn (pi.Name, "INT", constraints, modifiers);
-			} else if(pi.PropertyType == typeof(string)){
+			} else if (isBoolean (pi)) {
+				return new TableColumn (pi.Name, "BOOL", constraints, modifiers);
+			} else if (isString (pi)) {
 				return new TableColumn (pi.Name, "TEXT", constraints, modifiers);
-			} else if(pi.PropertyType == typeof(DateTime)){
+			} else if (isCharacter (pi)) {
+				return new TableColumn (pi.Name, "CHAR", constraints, modifiers);
+			} else if (isDateTime (pi)) {
 				return new TableColumn (pi.Name, "DATETIME", constraints, modifiers);
-			} else if(pi.PropertyType == typeof(double) || pi.PropertyType == typeof(float)){
+			} else if (isDecimal (pi)) {
 				return new TableColumn (pi.Name, "DECIMAL", constraints, modifiers);
-			} {
+			} else {
 				throw new NotSupportedException (pi.GetType().ToString());
 			}
+		}
+
+		private static bool isDecimal (PropertyInfo pi)
+		{
+			return pi.PropertyType == typeof(double) || pi.PropertyType == typeof(float) || pi.PropertyType == typeof(Double);
+		}
+
+		private static bool isDateTime (PropertyInfo pi)
+		{
+			return pi.PropertyType == typeof(DateTime);
+		}
+
+		private static bool isCharacter (PropertyInfo pi)
+		{
+			return pi.PropertyType == typeof(char) || pi.PropertyType == typeof(Char);
+		}
+
+		private static bool isString (PropertyInfo pi)
+		{
+			return pi.PropertyType == typeof(string) || pi.PropertyType == typeof(String);
+		}
+
+		private static bool isBoolean (PropertyInfo pi)
+		{
+			return pi.PropertyType == typeof(bool) || pi.PropertyType == typeof(Boolean);
 		}
 	}
 		

@@ -7,7 +7,7 @@ using System.Linq;
 namespace Test
 {
 	[TestFixture]
-	public class DapperWrapperTests
+	public class ModelWrapperTests
 	{
 		public class User
 		{
