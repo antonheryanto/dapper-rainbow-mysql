@@ -29,7 +29,7 @@ namespace Test
 		{
 			var objWrapped = new DapperWrapper (new User ().GetType());
 			Assert.IsTrue (objWrapped.getPrimaryKey() == "Id");
-
+		
 			var objWrapper2 = new DapperWrapper (new Address ().GetType());
 			Assert.IsTrue (objWrapper2.getPrimaryKey () == "Street");
 		}
@@ -37,21 +37,21 @@ namespace Test
 		[Test]
 		public void CanGetPrimaryKeyType(){
 			var objWrapper = new DapperWrapper (new User ().GetType());
-			Assert.IsTrue (objWrapper.getPrimaryKeyType () == typeof(int));
+			Assert.Equals (objWrapper.getPrimaryKeyType (), typeof(int));
 
 			var objWrapper2 = new DapperWrapper (new Address ().GetType());
-			Assert.IsTrue (objWrapper2.getPrimaryKeyType () == typeof(string));
+			Assert.Equals(objWrapper2.getPrimaryKeyType (), typeof(string));
 		}
 
 		[Test]
 		public void CanGetColumnProperties(){
-			var objWrapper = new DapperWrapper (new Address ().GetType());
+			var objWrapper = new DapperWrapper (new Address ().GetType ());
 			var columns = objWrapper.getTableColumns ();
-			Assert.Equals (columns.Count, 1);
+			Assert.IsTrue(columns.Count() == 1);
 
-			var objWrapper2 = new DapperWrapper (new User ().GetType());
-			var columns2 = objWrapper2.getTableColumns();
-			Assert.Equals(columns2.Count, 3);
+			var objWrapper2 = new DapperWrapper (new User ().GetType ());
+			var columns2 = objWrapper2.getTableColumns ();
+			Assert.IsTrue(columns2.Count() == 3);
 		}
 	}
 }

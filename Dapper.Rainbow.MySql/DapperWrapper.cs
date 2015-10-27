@@ -2,36 +2,36 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Dapper
 {
-	public class DapperWrapper
+	internal class DapperWrapper
 	{
 		private Type poco;
 		public DapperWrapper(Type poco){
 			this.poco = poco;
 		}
 
-		private IEnumerable<PropertyInfo> getReadableProperties(){
+		public IEnumerable<PropertyInfo> getProperties(){
 			return poco.GetProperties ().Where (e => e.CanRead == true);
 		}
 
-		private PropertyInfo getPropertyInfo(Type t){
-			var props = poco.GetProperties ().AsList();
-			return props.Where (e => e.GetCustomAttributes(true).AsList().Where(j => j.GetType() == typeof(PrimaryKey)).Count() == 1).FirstOrDefault();
+		private PropertyInfo getPrimaryKeyProperty(){
+			return getProperties ().Where (e => Attribute.IsDefined (e, typeof(PrimaryKey))).First();
 		}
-
+			
 		public string getPrimaryKey(){
-			return getPropertyInfo (typeof(PrimaryKey)).Name;
+			return getPrimaryKeyProperty ().Name;
 		}
 
 		public Type getPrimaryKeyType(){
-			return getPropertyInfo (typeof(PrimaryKey)).PropertyType;
+			return getPrimaryKeyProperty ().PropertyType;
 		}
 
 		public List<TableColumn> getTableColumns(){
 			var columns = new List<TableColumn> ();
-			getReadableProperties().ToList().ForEach(e => columns.Add(MySqlColumnFactory.TableColumnFromProperty(e)));
+			getProperties().ToList().ForEach(e => columns.Add(TableParameterFactory.TableColumnFromProperty(e)));
 			return columns;
 		}
 	}

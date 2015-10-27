@@ -8,47 +8,6 @@ using System.Dynamic;
 
 namespace Test
 {
-	[TestFixture]
-	public class TableOperationTests
-	{
-		class UserDB : Database<UserDB>
-		{
-			public Table<User> Users { get; set; }
-		}
-
-		class User {
-			public int Id { get; set; }
-		}
-
-		[TestFixtureSetUp]
-		public void Setup()
-		{            
-			var cn = new MySql.Data.MySqlClient.MySqlConnection(
-				System.Configuration.ConfigurationManager.ConnectionStrings[0].ConnectionString);
-			cn.Open();
-			db = UserDB.Init(cn, 30);
-		}
-			
-		UserDB db;
-		[Test]
-		public void CreateTable(){
-			db.Execute ("drop table if exists user;");
-			db.Users.Create ();
-			db.Execute ("drop table if exists user;");
-		}
-
-		[Test]
-		public void DeleteTable(){
-			db.Users.Drop ();
-		}
-
-		[Test]
-		public void TableAlreadyExistsExceptionTest(){
-			db.Users.Create ();
-			Assert.Throws<TableAlreadyExistsException>(db.Users.Create);
-		}
-	}
-		
     [TestFixture]
     public class Test
     {
@@ -92,8 +51,7 @@ namespace Test
 			var c = typeof(long);
 			Assert.Equals(c, t);
 		}
-
-
+			
         [Test]
         public void InsertOrUpdateWithId()
         {
@@ -142,8 +100,9 @@ namespace Test
                       System.Configuration.ConfigurationManager.ConnectionStrings[0].ConnectionString);
             cn.Open();
             db = Db.Init(cn, 30);
-			db.Execute ("Drop table profiles;");
-            db.Execute(@"CREATE TABLE profiles(
+
+			db.Execute ("drop table if exists profiles;");
+            db.Execute(@"CREATE TABLE profiles (
                 id INT(11) NOT NULL AUTO_INCREMENT ,
                 address VARCHAR(32), 
                 postcode VARCHAR(32), 
@@ -152,11 +111,12 @@ namespace Test
                 PRIMARY KEY (id),
 			    KEY(facultyId)
             );");
+
             if (db.Profiles.All().Count() == 0) {
                 db.Profiles.Insert(new { Address = "Alam Sari", City = "Kajang", PostCode = 43000, FacultyId=1 });
             }
 
-			db.ReportNote.Create ();
+			db.ReportNote.TryCreate();
         }
     }
 
