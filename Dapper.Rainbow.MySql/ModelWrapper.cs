@@ -6,10 +6,10 @@ using System.Runtime.CompilerServices;
 
 namespace Dapper
 {
-	internal class DapperWrapper
+	internal class ModelWrapper
 	{
 		private Type poco;
-		public DapperWrapper(Type poco){
+		public ModelWrapper(Type poco){
 			this.poco = poco;
 		}
 
