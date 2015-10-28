@@ -54,8 +54,11 @@
     <Compile Include="SqlBuilder.cs" />
     <Compile Include="IgnorePropertyAttribute.cs" />
     <Compile Include="Attributes.cs" />
-    <Compile Include="TableColumn.cs" />
-    <Compile Include="ModelWrapper.cs" />
+    <Compile Include="TableGeneration\TableParameterFactory.cs" />
+    <Compile Include="TableGeneration\TableColumn.cs" />
+    <Compile Include="TableGeneration\ModelWrapper.cs" />
+    <Compile Include="TableGeneration\Constraint.cs" />
+    <Compile Include="TableGeneration\Modifier.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -72,5 +75,6 @@
   -->
   <ItemGroup>
     <Folder Include="bin\" />
+    <Folder Include="TableGeneration\" />
   </ItemGroup>
 </Project>

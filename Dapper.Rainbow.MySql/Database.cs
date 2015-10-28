@@ -16,6 +16,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
+using Dapper.TableGeneration;
 
 namespace Dapper
 {

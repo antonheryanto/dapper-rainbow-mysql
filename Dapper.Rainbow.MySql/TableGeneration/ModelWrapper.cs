@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Dapper.TableGeneration;
 
-namespace Dapper
+namespace Dapper.TableGeneration
 {
 	internal class ModelWrapper
 	{

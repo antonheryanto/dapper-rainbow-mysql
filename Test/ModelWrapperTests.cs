@@ -3,6 +3,7 @@ using PetaTest;
 using Dapper;
 using System.Reflection;
 using System.Linq;
+using Dapper.TableGeneration;
 
 namespace Test
 {
