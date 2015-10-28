@@ -48,12 +48,16 @@
     <Reference Include="Dapper">
       <HintPath>..\packages\Dapper.1.40\lib\net45\Dapper.dll</HintPath>
     </Reference>
+    <Reference Include="System.Data.Linq" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PetaTest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Test.cs" />
+    <Compile Include="TableOperationsTests.cs" />
+    <Compile Include="TableParameterFactoryTests.cs" />
+    <Compile Include="ModelWrapperTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">

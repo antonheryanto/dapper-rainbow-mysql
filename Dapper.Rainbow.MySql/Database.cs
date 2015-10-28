@@ -16,9 +16,17 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
+using Dapper.TableGeneration;
 
 namespace Dapper
 {
+	/// <summary>
+	/// Exception that is thrown when attempting to create a table that already exists.
+	/// </summary>
+	public class TableAlreadyExistsException : Exception {
+		public TableAlreadyExistsException(string tablename) : base(tablename){ }
+	}
+
     /// <summary>
     /// A container for a database, assumes all the tables have an Id column named Id
     /// </summary>
@@ -37,6 +45,10 @@ namespace Dapper
                 this.likelyTableName = likelyTableName;
             }
 
+			/// <summary>
+			/// Gets the name of the table.
+			/// </summary>
+			/// <value>The name of the table.</value>
             public string TableName
             {
                 get
@@ -45,6 +57,42 @@ namespace Dapper
                     return tableName;
                 }
             }
+
+			private void CreateTable(){
+				var wrapper = new ModelWrapper(typeof(T));
+
+				var sql = "create table if not exists " + TableName + " (";
+				sql += string.Join (", ", wrapper.getTableColumns ());
+				sql += ");";
+
+				database.Execute (sql);
+			}
+
+			/// <summary>
+			/// Creates the table, or throws an exception if table already exists.
+			/// </summary>
+			/// <returns></returns>
+			public void Create(){
+				if (database.TableExists (tableName))
+					throw new TableAlreadyExistsException (tableName);
+				CreateTable ();
+			}
+
+			/// <summary>
+			/// Creates the table if it doesn't already exist
+			/// </summary>
+			/// <returns></returns>
+			public void TryCreate(){
+				CreateTable ();
+			}
+
+			/// <summary>
+			/// Drop the table
+			/// </summary>
+			/// <returns></returns>
+			public void Drop(){
+				database.Execute ("drop table if exists " + TableName + ";");
+			}
 
             /// <summary>
             /// Insert a row into the db
