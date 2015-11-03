@@ -56,11 +56,8 @@
     <Compile Include="Test.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config">
-      <SubType>Designer</SubType>
-    </None>
+    <None Include="App.config" />
     <None Include="packages.config" />
-    <None Include="App.Default.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapper.Rainbow.MySql\Dapper.Rainbow.MySql.csproj">
