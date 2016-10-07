@@ -6,13 +6,24 @@ using System.Reflection.Emit;
 
 namespace Dapper
 {
+	/// <summary>
+	/// Snapshotter.
+	/// </summary>
 	public static class Snapshotter
 	{
+		/// <summary>
+		/// Start the specified obj.
+		/// </summary>
+		/// <param name="obj">Object.</param>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
 		public static Snapshot<T> Start<T> (T obj)
 		{
 			return new Snapshot<T> (obj);
 		}
 
+		/// <summary>
+		/// Snapshot.
+		/// </summary>
 		public class Snapshot<T>
 		{
 			static Func<T, T> cloner;
@@ -20,18 +31,37 @@ namespace Dapper
 			T memberWiseClone;
 			T trackedObject;
 
+			/// <summary>
+			/// Initializes a new instance of the <see cref="T:Dapper.Snapshotter.Snapshot`1"/> class.
+			/// </summary>
+			/// <param name="original">Original.</param>
 			public Snapshot (T original)
 			{
 				memberWiseClone = Clone (original);
 				trackedObject = original;
 			}
 
+			/// <summary>
+			/// Change.
+			/// </summary>
 			public class Change
 			{
+				/// <summary>
+				/// Gets or sets the name.
+				/// </summary>
+				/// <value>The name.</value>
 				public string Name { get; set; }
+
+				/// <summary>
+				/// Gets or sets the new value.
+				/// </summary>
+				/// <value>The new value.</value>
 				public object NewValue { get; set; }
 			}
 
+			/// <summary>
+			/// Diff this instance.
+			/// </summary>
 			public DynamicParameters Diff ()
 			{
 				return Diff (memberWiseClone, trackedObject);

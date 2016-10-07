@@ -71,6 +71,14 @@ namespace Dapper
 			return p;
 		}
 
+		/// <summary>
+		/// Page the specified sql, page, param and itemsPerPage.
+		/// </summary>
+		/// <param name="sql">Sql.</param>
+		/// <param name="page">Page.</param>
+		/// <param name="param">Parameter.</param>
+		/// <param name="itemsPerPage">Items per page.</param>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
 		public Page<T> Page<T> (string sql, int page = 1, dynamic param = null, int itemsPerPage = 10)
 		{
 			string sqlPage;
@@ -80,11 +88,30 @@ namespace Dapper
 			return p;
 		}
 
+		/// <summary>
+		/// Page the specified sql, page, param and itemsPerPage.
+		/// </summary>
+		/// <param name="sql">Sql.</param>
+		/// <param name="page">Page.</param>
+		/// <param name="param">Parameter.</param>
+		/// <param name="itemsPerPage">Items per page.</param>
 		public Page<dynamic> Page (string sql, int page = 1, dynamic param = null, int itemsPerPage = 10)
 		{
 			return Page<dynamic> (sql, page, param as object, itemsPerPage);
 		}
 
+		/// <summary>
+		/// Page the specified sql, map, page, param, itemsPerPage and splitOn.
+		/// </summary>
+		/// <param name="sql">Sql.</param>
+		/// <param name="map">Map.</param>
+		/// <param name="page">Page.</param>
+		/// <param name="param">Parameter.</param>
+		/// <param name="itemsPerPage">Items per page.</param>
+		/// <param name="splitOn">Split on.</param>
+		/// <typeparam name="TFirst">The 1st type parameter.</typeparam>
+		/// <typeparam name="TSecond">The 2nd type parameter.</typeparam>
+		/// <typeparam name="TReturn">The 3rd type parameter.</typeparam>
 		public Page<TReturn> Page<TFirst, TSecond, TReturn> (string sql, Func<TFirst, TSecond, TReturn> map, int page = 1, dynamic param = null, int itemsPerPage = 10, string splitOn = "Id")
 		{
 			string sqlPage;
@@ -94,6 +121,19 @@ namespace Dapper
 			return p;
 		}
 
+		/// <summary>
+		/// Page the specified sql, map, page, param, itemsPerPage and splitOn.
+		/// </summary>
+		/// <param name="sql">Sql.</param>
+		/// <param name="map">Map.</param>
+		/// <param name="page">Page.</param>
+		/// <param name="param">Parameter.</param>
+		/// <param name="itemsPerPage">Items per page.</param>
+		/// <param name="splitOn">Split on.</param>
+		/// <typeparam name="TFirst">The 1st type parameter.</typeparam>
+		/// <typeparam name="TSecond">The 2nd type parameter.</typeparam>
+		/// <typeparam name="TThird">The 3rd type parameter.</typeparam>
+		/// <typeparam name="TReturn">The 4th type parameter.</typeparam>
 		public Page<TReturn> Page<TFirst, TSecond, TThird, TReturn> (string sql, Func<TFirst, TSecond, TThird, TReturn> map, int page, dynamic param = null, int itemsPerPage = 10, string splitOn = "Id")
 		{
 			string sqlPage;
@@ -103,6 +143,20 @@ namespace Dapper
 			return p;
 		}
 
+		/// <summary>
+		/// Page the specified sql, map, page, param, itemsPerPage and splitOn.
+		/// </summary>
+		/// <param name="sql">Sql.</param>
+		/// <param name="map">Map.</param>
+		/// <param name="page">Page.</param>
+		/// <param name="param">Parameter.</param>
+		/// <param name="itemsPerPage">Items per page.</param>
+		/// <param name="splitOn">Split on.</param>
+		/// <typeparam name="TFirst">The 1st type parameter.</typeparam>
+		/// <typeparam name="TSecond">The 2nd type parameter.</typeparam>
+		/// <typeparam name="TThird">The 3rd type parameter.</typeparam>
+		/// <typeparam name="TFourth">The 4th type parameter.</typeparam>
+		/// <typeparam name="TReturn">The 5th type parameter.</typeparam>
 		public Page<TReturn> Page<TFirst, TSecond, TThird, TFourth, TReturn> (string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, int page = 1, dynamic param = null, int itemsPerPage = 10, string splitOn = "Id")
 		{
 			string sqlPage;
@@ -112,6 +166,21 @@ namespace Dapper
 			return p;
 		}
 
+		/// <summary>
+		/// Page the specified sql, map, page, param, itemsPerPage and splitOn.
+		/// </summary>
+		/// <param name="sql">Sql.</param>
+		/// <param name="map">Map.</param>
+		/// <param name="page">Page.</param>
+		/// <param name="param">Parameter.</param>
+		/// <param name="itemsPerPage">Items per page.</param>
+		/// <param name="splitOn">Split on.</param>
+		/// <typeparam name="TFirst">The 1st type parameter.</typeparam>
+		/// <typeparam name="TSecond">The 2nd type parameter.</typeparam>
+		/// <typeparam name="TThird">The 3rd type parameter.</typeparam>
+		/// <typeparam name="TFourth">The 4th type parameter.</typeparam>
+		/// <typeparam name="TFifth">The 5th type parameter.</typeparam>
+		/// <typeparam name="TReturn">The 6th type parameter.</typeparam>
 		public Page<TReturn> Page<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> (string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, int page = 1, dynamic param = null, int itemsPerPage = 10, string splitOn = "Id")
 		{
 			string sqlPage;
@@ -122,19 +191,69 @@ namespace Dapper
 		}
 	}
 
-
-
+	/// <summary>
+	/// Page.
+	/// </summary>
 	public class Page<T>
 	{
+		/// <summary>
+		/// Gets or sets the items per page.
+		/// </summary>
+		/// <value>The items per page.</value>
 		public int ItemsPerPage { get; set; }
+
+		/// <summary>
+		/// Gets or sets the current page.
+		/// </summary>
+		/// <value>The current page.</value>
 		public int CurrentPage { get; set; }
+
+		/// <summary>
+		/// Gets or sets the page displayed.
+		/// </summary>
+		/// <value>The page displayed.</value>
 		public long PageDisplayed { get; set; }
+
+		/// <summary>
+		/// Gets or sets the total page.
+		/// </summary>
+		/// <value>The total page.</value>
 		public long TotalPage { get; set; }
+
+		/// <summary>
+		/// Gets or sets the total items.
+		/// </summary>
+		/// <value>The total items.</value>
 		public long TotalItems { get; set; }
+
+		/// <summary>
+		/// Gets or sets the start.
+		/// </summary>
+		/// <value>The start.</value>
 		public int Start { get; set; }
+
+		/// <summary>
+		/// Gets or sets the numbering.
+		/// </summary>
+		/// <value>The numbering.</value>
 		public int Numbering { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether this <see cref="T:Dapper.Page`1"/> has previous.
+		/// </summary>
+		/// <value><c>true</c> if has previous; otherwise, <c>false</c>.</value>
 		public bool HasPrevious { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether this <see cref="T:Dapper.Page`1"/> has next.
+		/// </summary>
+		/// <value><c>true</c> if has next; otherwise, <c>false</c>.</value>
 		public bool HasNext { get; set; }
+
+		/// <summary>
+		/// Gets or sets the items.
+		/// </summary>
+		/// <value>The items.</value>
 		public List<T> Items { get; set; }
 	}
 }

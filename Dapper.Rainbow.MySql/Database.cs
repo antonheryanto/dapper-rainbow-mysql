@@ -15,18 +15,32 @@ namespace Dapper
 	/// <typeparam name="TDatabase"></typeparam>
 	public abstract partial class Database<TDatabase> : IDisposable where TDatabase : Database<TDatabase>, new()
 	{
+		/// <summary>
+		/// A container for table with table type and id type
+		/// <typeparam name="T"></typeparam>
+		/// <typeparam name="TId"></typeparam>
+		/// </summary>
 		public partial class Table<T, TId>
 		{
 			internal Database<TDatabase> database;
 			internal string tableName;
 			internal string likelyTableName;
 
+			/// <summary>
+			/// Initializes a new instance of the <see cref="T:Dapper.Database`1.Table`2"/> class.
+			/// </summary>
+			/// <param name="database">Database.</param>
+			/// <param name="likelyTableName">Likely table name.</param>
 			public Table (Database<TDatabase> database, string likelyTableName)
 			{
 				this.database = database;
 				this.likelyTableName = likelyTableName;
 			}
 
+			/// <summary>
+			/// Gets the name of the table.
+			/// </summary>
+			/// <value>The name of the table.</value>
 			public string TableName {
 				get {
 					tableName = tableName ?? database.DetermineTableName<T> (likelyTableName);
@@ -233,8 +247,16 @@ namespace Dapper
 			}
 		}
 
+		/// <summary>
+		/// Table implementation using id long
+		/// </summary>
 		public class Table<T> : Table<T, long>
 		{
+			/// <summary>
+			/// Initializes a new instance of the <see cref="T:Dapper.Database`1.Table`1"/> class.
+			/// </summary>
+			/// <param name="database">Database.</param>
+			/// <param name="likelyTableName">Likely table name.</param>
 			public Table (Database<TDatabase> database, string likelyTableName)
 				: base (database, likelyTableName)
 			{
@@ -279,23 +301,38 @@ namespace Dapper
 			return CreateTableConstructor (typeof (Table<>));
 		}
 
+		/// <summary>
+		/// Begins the transaction.
+		/// </summary>
+		/// <param name="isolation">Isolation.</param>
 		public void BeginTransaction (IsolationLevel isolation = IsolationLevel.ReadCommitted)
 		{
 			transaction = connection.BeginTransaction (isolation);
 		}
 
+		/// <summary>
+		/// Commits the transaction.
+		/// </summary>
 		public void CommitTransaction ()
 		{
 			transaction.Commit ();
 			transaction = null;
 		}
 
+		/// <summary>
+		/// Rollbacks the transaction.
+		/// </summary>
 		public void RollbackTransaction ()
 		{
 			transaction.Rollback ();
 			transaction = null;
 		}
 
+		/// <summary>
+		/// Creates the table constructor.
+		/// </summary>
+		/// <returns>The table constructor.</returns>
+		/// <param name="tableType">Table type.</param>
 		protected Action<TDatabase> CreateTableConstructor (Type tableType)
 		{
 			var dm = new DynamicMethod ("ConstructInstances", null, new Type [] { typeof (TDatabase) }, true);
@@ -363,48 +400,139 @@ namespace Dapper
 				new { name }, transaction: transaction).Count () == 1;
 		}
 
+		/// <summary>
+		/// Execute the specified sql and param.
+		/// </summary>
+		/// <param name="sql">Sql.</param>
+		/// <param name="param">Parameter.</param>
 		public int Execute (string sql, dynamic param = null)
 		{
 			return SqlMapper.Execute (connection, sql, param as object, transaction, commandTimeout: this.commandTimeout);
 		}
 
+		/// <summary>
+		/// Query the specified sql, param and buffered.
+		/// </summary>
+		/// <param name="sql">Sql.</param>
+		/// <param name="param">Parameter.</param>
+		/// <param name="buffered">If set to <c>true</c> buffered.</param>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
 		public IEnumerable<T> Query<T> (string sql, dynamic param = null, bool buffered = true)
 		{
 
 			return SqlMapper.Query<T> (connection, sql, param as object, transaction, buffered, commandTimeout);
 		}
 
+		/// <summary>
+		/// Query the specified sql, map, param, transaction, buffered, splitOn and commandTimeout.
+		/// </summary>
+		/// <param name="sql">Sql.</param>
+		/// <param name="map">Map.</param>
+		/// <param name="param">Parameter.</param>
+		/// <param name="transaction">Transaction.</param>
+		/// <param name="buffered">If set to <c>true</c> buffered.</param>
+		/// <param name="splitOn">Split on.</param>
+		/// <param name="commandTimeout">Command timeout.</param>
+		/// <typeparam name="TFirst">The 1st type parameter.</typeparam>
+		/// <typeparam name="TSecond">The 2nd type parameter.</typeparam>
+		/// <typeparam name="TReturn">The 3rd type parameter.</typeparam>
 		public IEnumerable<TReturn> Query<TFirst, TSecond, TReturn> (string sql, Func<TFirst, TSecond, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
 		{
 			return SqlMapper.Query (connection, sql, map, param as object, transaction, buffered, splitOn);
 		}
 
+		/// <summary>
+		/// Query the specified sql, map, param, transaction, buffered, splitOn and commandTimeout.
+		/// </summary>
+		/// <param name="sql">Sql.</param>
+		/// <param name="map">Map.</param>
+		/// <param name="param">Parameter.</param>
+		/// <param name="transaction">Transaction.</param>
+		/// <param name="buffered">If set to <c>true</c> buffered.</param>
+		/// <param name="splitOn">Split on.</param>
+		/// <param name="commandTimeout">Command timeout.</param>
+		/// <typeparam name="TFirst">The 1st type parameter.</typeparam>
+		/// <typeparam name="TSecond">The 2nd type parameter.</typeparam>
+		/// <typeparam name="TThird">The 3rd type parameter.</typeparam>
+		/// <typeparam name="TReturn">The 4th type parameter.</typeparam>
 		public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TReturn> (string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
 		{
 			return SqlMapper.Query (connection, sql, map, param as object, transaction, buffered, splitOn);
 		}
 
+		/// <summary>
+		/// Query the specified sql, map, param, transaction, buffered, splitOn and commandTimeout.
+		/// </summary>
+		/// <param name="sql">Sql.</param>
+		/// <param name="map">Map.</param>
+		/// <param name="param">Parameter.</param>
+		/// <param name="transaction">Transaction.</param>
+		/// <param name="buffered">If set to <c>true</c> buffered.</param>
+		/// <param name="splitOn">Split on.</param>
+		/// <param name="commandTimeout">Command timeout.</param>
+		/// <typeparam name="TFirst">The 1st type parameter.</typeparam>
+		/// <typeparam name="TSecond">The 2nd type parameter.</typeparam>
+		/// <typeparam name="TThird">The 3rd type parameter.</typeparam>
+		/// <typeparam name="TFourth">The 4th type parameter.</typeparam>
+		/// <typeparam name="TReturn">The 5th type parameter.</typeparam>
 		public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TReturn> (string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
 		{
 			return SqlMapper.Query (connection, sql, map, param as object, transaction, buffered, splitOn);
 		}
 
+		/// <summary>
+		/// Query the specified sql, map, param, transaction, buffered, splitOn and commandTimeout.
+		/// </summary>
+		/// <param name="sql">Sql.</param>
+		/// <param name="map">Map.</param>
+		/// <param name="param">Parameter.</param>
+		/// <param name="transaction">Transaction.</param>
+		/// <param name="buffered">If set to <c>true</c> buffered.</param>
+		/// <param name="splitOn">Split on.</param>
+		/// <param name="commandTimeout">Command timeout.</param>
+		/// <typeparam name="TFirst">The 1st type parameter.</typeparam>
+		/// <typeparam name="TSecond">The 2nd type parameter.</typeparam>
+		/// <typeparam name="TThird">The 3rd type parameter.</typeparam>
+		/// <typeparam name="TFourth">The 4th type parameter.</typeparam>
+		/// <typeparam name="TFifth">The 5th type parameter.</typeparam>
+		/// <typeparam name="TReturn">The 6th type parameter.</typeparam>
 		public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> (string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
 		{
 			return SqlMapper.Query (connection, sql, map, param as object, transaction, buffered, splitOn);
 		}
 
+		/// <summary>
+		/// Query the specified sql, param and buffered.
+		/// </summary>
+		/// <param name="sql">Sql.</param>
+		/// <param name="param">Parameter.</param>
+		/// <param name="buffered">If set to <c>true</c> buffered.</param>
 		public IEnumerable<dynamic> Query (string sql, dynamic param = null, bool buffered = true)
 		{
 			return SqlMapper.Query (connection, sql, param as object, transaction, buffered);
 		}
 
+		/// <summary>
+		/// Queries the multiple.
+		/// </summary>
+		/// <returns>The multiple.</returns>
+		/// <param name="sql">Sql.</param>
+		/// <param name="param">Parameter.</param>
+		/// <param name="transaction">Transaction.</param>
+		/// <param name="commandTimeout">Command timeout.</param>
+		/// <param name="commandType">Command type.</param>
 		public Dapper.SqlMapper.GridReader QueryMultiple (string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
 		{
 			return SqlMapper.QueryMultiple (connection, sql, param, transaction, commandTimeout, commandType);
 		}
 
-
+		/// <summary>
+		/// Releases all resource used by the <see cref="T:Dapper.Database`1"/> object.
+		/// </summary>
+		/// <remarks>Call <see cref="Dispose"/> when you are finished using the <see cref="T:Dapper.Database`1"/>. The
+		/// <see cref="Dispose"/> method leaves the <see cref="T:Dapper.Database`1"/> in an unusable state. After calling
+		/// <see cref="Dispose"/>, you must release all references to the <see cref="T:Dapper.Database`1"/> so the garbage
+		/// collector can reclaim the memory that the <see cref="T:Dapper.Database`1"/> was occupying.</remarks>
 		public void Dispose ()
 		{
 			if (connection == null) return;
