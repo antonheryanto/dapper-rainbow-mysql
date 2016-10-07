@@ -1,123 +1,122 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using PetaTest;
-using Dapper;
-using System.Dynamic;
-using MySql.Data.MySqlClient;
 using System.Configuration;
+using System.Dynamic;
+using System.Linq;
+using Dapper;
+using MySql.Data.MySqlClient;
+using PetaTest;
 
 namespace Test
 {
-    [TestFixture]
-    public class Test
-    {
-        [Test]
-        public void SqlBuilderTest()
-        {
-            var sql = new SqlBuilder();
-            var count = sql.AddTemplate("SELECT COUNT(*) FROM profiles /**where**/");
-            var selector = sql.AddTemplate("SELECT * FROM profiles /**where**/ /**orderby**/");
-            sql.Where("id = @id", new { id = 1 });
-            sql.Where("city = @city", new { city = "Kajang" });
-            sql.OrderBy("id DESC");
-            sql.OrderBy("city");
+	[TestFixture]
+	public class Test
+	{
+		[Test]
+		public void SqlBuilderTest ()
+		{
+			var sql = new SqlBuilder ();
+			var count = sql.AddTemplate ("SELECT COUNT(*) FROM profiles /**where**/");
+			var selector = sql.AddTemplate ("SELECT * FROM profiles /**where**/ /**orderby**/");
+			sql.Where ("id = @id", new { id = 1 });
+			sql.Where ("city = @city", new { city = "Kajang" });
+			sql.OrderBy ("id DESC");
+			sql.OrderBy ("city");
 
-            var total = db.Query<long>(count.RawSql, count.Parameters).Single();
-            var rows = db.Query<Profile>(selector.RawSql, selector.Parameters);
+			var total = db.Query<long> (count.RawSql, count.Parameters).Single ();
+			var rows = db.Query<Profile> (selector.RawSql, selector.Parameters);
 
-            Assert.AreEqual(total, 1);
-            Assert.AreEqual(rows.First().City, "Kajang");
-        }
+			Assert.AreEqual (total, 1);
+			Assert.AreEqual (rows.First ().City, "Kajang");
+		}
 
-        [Test]
-        public void PageTest()
-        {            
-            var x = db.Profiles.Page(1, 1);            
-            Assert.Equals(x.Items.First().City, "Kajang");
-        }
+		[Test]
+		public void PageTest ()
+		{
+			var x = db.Profiles.Page (1, 1);
+			Assert.Equals (x.Items.First ().City, "Kajang");
+		}
 
 		[Test]
 		public void CountTest ()
 		{
-			var x = db.Query("SELECT COUNT(*) FROM profiles").Single() as IDictionary<string, object>;
-			var y = x.Values.Single().GetType();
-			Assert.Equals(typeof(long), y);
+			var x = db.Query ("SELECT COUNT(*) FROM profiles").Single () as IDictionary<string, object>;
+			var y = x.Values.Single ().GetType ();
+			Assert.Equals (typeof (long), y);
 		}
 
 		[Test]
 		public void LastId ()
 		{
-			var r = db.Query("SELECT LAST_INSERT_ID()").Single() as IDictionary<string, object>;
-			var t = r.Values.Single().GetType();
-			var c = typeof(long);
-			Assert.Equals(c, t);
-		}
-
-        [Test]
-        public void InsertOrUpdateWithId()
-        {
-            var c = db.Profiles.Get(1);
-            var id = db.Profiles.InsertOrUpdate(c.Id, new { City = "Bangi" });
-            var p = db.Profiles.Page(where: new { id });
-            Assert.AreEqual(p.Items.Count, 1);
-        }
-
-        [Test]
-        public void InsertOrUpdateWithoutId()
-        {
-            var x = db.ReportNote.InsertOrUpdate(new { userId = 1, sessionId = 1, note = "note", noterId = 2 });
-            var y = db.ReportNote.Get(new { userId = 1 });
-            Assert.AreEqual(x, y.UserId);
-        }
-
-        [Test]
-		public void UpdateTest()
-		{            
-			var city = "Bangi";
-			var id = 1;
-			var facultyId = 1;
-			db.Profiles.Update(new { id, facultyId }, new { city });   
-			var p = db.Profiles.Get(new { id, facultyId });
-			Assert.AreEqual(p.City, city);
+			var r = db.Query ("SELECT LAST_INSERT_ID()").Single () as IDictionary<string, object>;
+			var t = r.Values.Single ().GetType ();
+			var c = typeof (long);
+			Assert.Equals (c, t);
 		}
 
 		[Test]
-		public void DynamicParametersTest()
+		public void InsertOrUpdateWithId ()
+		{
+			var c = db.Profiles.Get (1);
+			var id = db.Profiles.InsertOrUpdate (c.Id, new { City = "Bangi" });
+			var p = db.Profiles.Page (where: new { id });
+			Assert.AreEqual (p.Items.Count, 1);
+		}
+
+		[Test]
+		public void InsertOrUpdateWithoutId ()
+		{
+			var x = db.ReportNote.InsertOrUpdate (new { userId = 1, sessionId = 1, note = "note", noterId = 2 });
+			var y = db.ReportNote.Get (new { userId = 1 });
+			Assert.AreEqual (x, y.UserId);
+		}
+
+		[Test]
+		public void UpdateTest ()
+		{
+			var city = "Bangi";
+			var id = 1;
+			var facultyId = 1;
+			db.Profiles.Update (new { id, facultyId }, new { city });
+			var p = db.Profiles.Get (new { id, facultyId });
+			Assert.AreEqual (p.City, city);
+		}
+
+		[Test]
+		public void DynamicParametersTest ()
 		{
 			var p = new DynamicExpando (new { city = "Bangi", facultyId = 1 });
 			p.AddRange (new { Address = "add late", PostCode = "43650" });
 			dynamic o = new ExpandoObject ();
 
-            o.City = "Bangi";
+			o.City = "Bangi";
 			var x = db.Query (@"SELECT * FROM profiles WHERE city=@city", o);
 			Assert.Equals (p, x);
 		}
 
-        Db db;
-        [TestFixtureSetUp]
-        public void Setup()
-        {
-            var connectionString = ConfigurationManager.ConnectionStrings["MySql"].ConnectionString;
-            var cn = new MySqlConnection(connectionString);
-            
-            cn.Open();
+		Db db;
+		[TestFixtureSetUp]
+		public void Setup ()
+		{
+			var connectionString = ConfigurationManager.ConnectionStrings ["MySql"].ConnectionString;
+			var cn = new MySqlConnection (connectionString);
 
-            db = Db.Init(cn, 30);
-            db.Execute("drop table if exists profiles;");
-            db.Execute(@"CREATE TABLE profiles(
+			cn.Open ();
+
+			db = Db.Init (cn, 30);
+			db.Execute ("drop table if exists profiles;");
+			db.Execute (@"CREATE TABLE profiles(
                 id INT(11) NOT NULL AUTO_INCREMENT ,
-                address VARCHAR(32), 
-                postcode VARCHAR(32), 
-                city VARCHAR(32), 
+                address VARCHAR(32),
+                postcode VARCHAR(32),
+                city VARCHAR(32),
                 facultyId INT(11) NOT NULL DEFAULT 0,
                 PRIMARY KEY (id),
 			    KEY(facultyId)
             );");
 
-            db.Execute("drop table if exists reportnote");
-            db.Execute(@"CREATE TABLE reportnote(
+			db.Execute ("drop table if exists reportnote");
+			db.Execute (@"CREATE TABLE reportnote(
                 UserId INT,
                 SessionId INT,
                 NoterId INT,
@@ -128,34 +127,33 @@ namespace Test
                 Key(SessionId)
             );");
 
-            if (db.Profiles.All().Count() == 0)
-            {
-                db.Profiles.Insert(new { Address = "Alam Sari", City = "Kajang", PostCode = 43000, FacultyId = 1 });
-            }
-        }
-    }
+			if (db.Profiles.All ().Count () == 0) {
+				db.Profiles.Insert (new { Address = "Alam Sari", City = "Kajang", PostCode = 43000, FacultyId = 1 });
+			}
+		}
+	}
 
-    public class Db : Database<Db>
-    {
-        public Table<Profile> Profiles { get; set; }
+	public class Db : Database<Db>
+	{
+		public Table<Profile> Profiles { get; set; }
 		public Table<ReportNote> ReportNote { get; set; }
-    }
+	}
 
-    public class Profile
-    {
-        public int Id { get; set; }                
-        public string Address { get; set; }
-        public string PostCode { get; set; }
-        public string City { get; set; }
-        public int FacultyId { get; set; }
-        public User User { get; set; }
-    }
+	public class Profile
+	{
+		public int Id { get; set; }
+		public string Address { get; set; }
+		public string PostCode { get; set; }
+		public string City { get; set; }
+		public int FacultyId { get; set; }
+		public User User { get; set; }
+	}
 
-    public class User
-    {
-        public uint Id { get; set; }
-        public string Name { get; set; }
-    }
+	public class User
+	{
+		public uint Id { get; set; }
+		public string Name { get; set; }
+	}
 
 	public class ReportNote
 	{
@@ -164,7 +162,7 @@ namespace Test
 		public int NoterId { get; set; }
 		public string Note { get; set; }
 		public DateTime Changed { get; set; }
-		
+
 		public override string ToString ()
 		{
 			return Note;
@@ -180,17 +178,17 @@ namespace Test
 			AddRange (param);
 		}
 
-		public void AddRange(dynamic param)
+		public void AddRange (dynamic param)
 		{
 			if (param as object == null) return;
-			foreach (var property in System.ComponentModel.TypeDescriptor.GetProperties(param.GetType()))
-				members.Add(property.Name, property.GetValue(param));
+			foreach (var property in System.ComponentModel.TypeDescriptor.GetProperties (param.GetType ()))
+				members.Add (property.Name, property.GetValue (param));
 		}
 
-		public override bool TryGetMember(GetMemberBinder binder, out object result)
+		public override bool TryGetMember (GetMemberBinder binder, out object result)
 		{
-			string name = binder.Name.ToLower();
-			return members.TryGetValue(name, out result);
+			string name = binder.Name.ToLower ();
+			return members.TryGetValue (name, out result);
 		}
 	}
 }

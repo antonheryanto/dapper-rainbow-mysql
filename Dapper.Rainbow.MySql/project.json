@@ -1,0 +1,74 @@
+﻿{
+  "packOptions": {
+    "summary": "CRUD Helper for Dapper targeting MySQL",
+    "tags": [ "orm", "sql", "micro-orm", "dapper", "mysql" ],
+    "owners": [ "anton" ],
+    "releaseNotes": "https://github.com/antonheryanto/dapper-rainbow-mysql",
+    "projectUrl": "https://github.com/antonheryanto/dapper-rainbow-mysql",
+    "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/antonheryanto/dapper-rainbow-mysql"
+    }
+  },
+  "version": "0.8.0",
+  "authors": [ "Sam Saffron", "Marc Gravell", "Nick Craver", "Anton Heryanto" ],
+  "description": "Trivial micro-orm implemented on Dapper, provides with CRUD helpers. specialize to handle MySql",
+  "title": "Dapper Rainbow MySql",
+  "copyright": "2016 Anton Heryanto",
+  "dependencies": {
+    "Dapper": "1.50.2"      
+  },
+  "buildOptions": {
+    // "xmlDoc": true,
+    "warningsAsErrors": true
+  },
+  "frameworks": {
+    "net45": {
+      "buildOptions": {
+        "define": [ "ASYNC" ]
+      },
+      "frameworkAssemblies": {
+        "System.Data": "4.0.0.0",
+        "System.Xml": "4.0.0.0",
+        "System.Xml.Linq": "4.0.0.0"
+      }
+    },
+    "net451": {
+      "buildOptions": {
+        "define": [ "ASYNC" ]
+      },
+      "frameworkAssemblies": {
+        "System.Data": "4.0.0.0",
+        "System.Xml": "4.0.0.0",
+        "System.Xml.Linq": "4.0.0.0"
+      }
+    },
+    "netstandard1.6": {
+      "buildOptions": {
+        "define": [ "ASYNC", "COREFX" ]
+      },
+      "dependencies": {
+        "Microsoft.CSharp": "4.0.1",
+        "System.Collections": "4.0.11",
+        "System.Collections.Concurrent": "4.0.12",
+        "System.Collections.NonGeneric": "4.0.1",
+        "System.Data.SqlClient": "4.1.0",
+        "System.Dynamic.Runtime": "4.0.11",
+        "System.Linq": "4.1.0",
+        "System.Reflection": "4.1.0",
+        "System.Reflection.Emit": "4.0.1",
+        "System.Reflection.Emit.Lightweight": "4.0.1",
+        "System.Reflection.Extensions": "4.0.1",
+        "System.Reflection.TypeExtensions": "4.1.0",
+        "System.Runtime": "4.1.0",
+        "System.Runtime.Extensions": "4.1.0",
+        "System.Runtime.InteropServices": "4.1.0",
+        "System.Text.RegularExpressions": "4.1.0",
+        "System.Threading": "4.0.11",
+        "System.Xml.XDocument": "4.0.11",
+        "System.Xml.XmlDocument": "4.0.1"
+      }
+    }
+  }
+}
