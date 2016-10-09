@@ -30,7 +30,7 @@ Usage
       {
         var conn = new MysqlConnection(connectionString)){
         conn.Open();
-        return UserDB.Init(conn, commandTimeout: 30);
+        return Db.Init(conn, commandTimeout: 30);
       }
     }
     
