@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Dynamic;
 using System.Linq;
+using System.Threading.Tasks;
 using Dapper;
 using MySql.Data.MySqlClient;
 using PetaTest;
+using static PetaTest.Assert;
 
 namespace Test
 {
@@ -25,50 +27,44 @@ namespace Test
 
 			var total = db.Query<long> (count.RawSql, count.Parameters).Single ();
 			var rows = db.Query<Profile> (selector.RawSql, selector.Parameters);
-
-			Assert.AreEqual (total, 1);
-			Assert.AreEqual (rows.First ().City, "Kajang");
+			AreEqual (total, 1);
+			AreEqual (rows.First ().City, "Kajang");
 		}
 
 		[Test]
-		public void PageTest ()
-		{
-			var x = db.Profiles.Page (1, 1);
-			Assert.Equals (x.Items.First ().City, "Kajang");
-		}
+		public void PageTest () => AreEqual (db.Profiles.Page (1, 1).Items[0].City, "Kajang");
 
 		[Test]
 		public void CountTest ()
 		{
 			var x = db.Query ("SELECT COUNT(*) FROM profiles").Single () as IDictionary<string, object>;
 			var y = x.Values.Single ().GetType ();
-			Assert.Equals (typeof (long), y);
+			AreEqual (typeof (long), y);
 		}
 
 		[Test]
-		public void LastId ()
+		public void LastIdTest ()
 		{
 			var r = db.Query ("SELECT LAST_INSERT_ID()").Single () as IDictionary<string, object>;
-			var t = r.Values.Single ().GetType ();
-			var c = typeof (long);
-			Assert.Equals (c, t);
+			var t = Convert.ToInt64(r.Values.Single ());
+			AreEqual (typeof(long), t.GetType());
 		}
 
 		[Test]
-		public void InsertOrUpdateWithId ()
+		public void InsertOrUpdateWithIdTest ()
 		{
 			var c = db.Profiles.Get (1);
 			var id = db.Profiles.InsertOrUpdate (c.Id, new { City = "Bangi" });
 			var p = db.Profiles.Page (where: new { id });
-			Assert.AreEqual (p.Items.Count, 1);
+			AreEqual (p.Items.Count, 1);
 		}
 
 		[Test]
-		public void InsertOrUpdateWithoutId ()
+		public void InsertOrUpdateWithoutIdTest ()
 		{
 			var x = db.ReportNote.InsertOrUpdate (new { userId = 1, sessionId = 1, note = "note", noterId = 2 });
 			var y = db.ReportNote.Get (new { userId = 1 });
-			Assert.AreEqual (x, y.UserId);
+			AreEqual (x, y.UserId);
 		}
 
 		[Test]
@@ -79,20 +75,48 @@ namespace Test
 			var facultyId = 1;
 			db.Profiles.Update (new { id, facultyId }, new { city });
 			var p = db.Profiles.Get (new { id, facultyId });
-			Assert.AreEqual (p.City, city);
+			AreEqual (p.City, city);
 		}
 
 		[Test]
-		public void DynamicParametersTest ()
+		public void UpdateAsyncTest ()
 		{
-			var p = new DynamicExpando (new { city = "Bangi", facultyId = 1 });
-			p.AddRange (new { Address = "add late", PostCode = "43650" });
-			dynamic o = new ExpandoObject ();
-
-			o.City = "Bangi";
-			var x = db.Query (@"SELECT * FROM profiles WHERE city=@city", o);
-			Assert.Equals (p, x);
+			var id = 1;
+			var city = "Kajang";
+			db.Profiles.UpdateAsync (id, new { city });
+			AreEqual (city, db.Profiles.Get (id).City);
 		}
+
+		[Test]
+		public void GetTest () => AreEqual (db.Profiles.Get (1).FacultyId, 1);
+
+		[Test]
+		public async Task GetAsyncTest () => AreEqual ((await db.Profiles.GetAsync (1)).FacultyId, 1);
+
+		[Test]
+		public void AllTest () => AreEqual (db.Profiles.All().Count(), 1);
+
+		[Test]
+		public void AllWhereTest () => AreEqual (db.Profiles.All (new { facultyId = 1 }).First().Id, 1);
+
+		[Test]
+		public async Task AllAsyncTest () => AreEqual ((await db.Profiles.AllAsync ()).Count (), 1);
+
+		[Test]
+		public async Task AllAsyncWhereTest () => AreEqual ((await db.Profiles.AllAsync (new { facultyId = 1 })).First ().Id, 1);
+
+		[Test]
+		public void FirstTest () => AreEqual (db.Profiles.First ().Id, 1);
+
+		[Test]
+		public void FirstWhereTest () => AreEqual (db.Profiles.First (new { facultyId = 1 }).Id, 1);
+
+		[Test]
+		public async Task FirstAsyncTest () => AreEqual ((await db.Profiles.FirstAsync ()).FacultyId, 1);
+
+		[Test]
+		public async Task FirstWhereAsyncTest () => AreEqual ((await db.Profiles.FirstAsync (new { facultyId = 1 })).FacultyId, 1);
+
 
 		Db db;
 		[TestFixtureSetUp]

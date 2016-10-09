@@ -23,8 +23,8 @@ namespace Dapper
 				paramNames.Remove ("Id");
 
 				string cols = string.Join ("`,`", paramNames);
-				string colsParams = string.Join (",", paramNames.Select (p => "@" + p));
-				var sql = "INSERT INTO `" + TableName + "` (`" + cols + "`) VALUES (" + colsParams + "); SELECT LAST_INSERT_ID()";
+				string cols_params = string.Join (",", paramNames.Select (p => "@" + p));
+				var sql = $"INSERT INTO `{TableName}` (`{cols}`) VALUES ({cols_params}); SELECT LAST_INSERT_ID()";
 				var id = (await database.QueryAsync (sql, o).ConfigureAwait (false)).Single () as IDictionary<string, object>;
 
 				return Convert.ToInt64 (id.Values.Single ());
@@ -36,10 +36,7 @@ namespace Dapper
 			/// <param name="id"></param>
 			/// <param name="data"></param>
 			/// <returns></returns>
-			public Task<int> UpdateAsync (TId id, dynamic data)
-			{
-				return UpdateAsync (new { id }, data);
-			}
+			public Task<int> UpdateAsync (TId id, dynamic data) => UpdateAsync (new { id }, data);
 
 
 			/// <summary>
@@ -53,14 +50,13 @@ namespace Dapper
 				List<string> paramNames = GetParamNames ((object)data);
 				List<string> keys = GetParamNames ((object)where);
 
-				var b = new StringBuilder ();
-				b.Append ("UPDATE `").Append (TableName).Append ("` SET ");
-				b.AppendLine (string.Join (",", paramNames.Select (p => "`" + p + "`= @" + p)));
-				b.Append (" WHERE ").Append (string.Join (" AND ", keys.Select (p => "`" + p + "` = @" + p)));
+				var cols_update = string.Join (",", paramNames.Select (p => $"`{p}`= @{p}"));
+				var cols_where = string.Join (" AND ", keys.Select (p => $"`{p}` = @{p}"));
+				var sql = $"UPDATE `{TableName}` SET {cols_update} WHERE {cols_where}";
 
 				var parameters = new DynamicParameters (data);
 				parameters.AddDynamicParams (where);
-				return database.ExecuteAsync (b.ToString (), parameters);
+				return database.ExecuteAsync (sql, parameters);
 			}
 
 
@@ -71,10 +67,7 @@ namespace Dapper
 			/// <param name="id"></param>
 			/// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
 			/// <returns></returns>
-			public async Task<long> InsertOrUpdateAsync (TId id, dynamic data)
-			{
-				return await InsertOrUpdateAsync (new { id }, data);
-			}
+			public async Task<long> InsertOrUpdateAsync (TId id, dynamic data) => await InsertOrUpdateAsync (new { id }, data);
 
 			/// <summary>
 			/// Insert a row into the db or update when key is duplicated asynchronously
@@ -90,15 +83,13 @@ namespace Dapper
 
 				string cols = string.Join ("`,`", paramNames);
 				string cols_params = string.Join (",", paramNames.Select (p => "@" + p));
-				string cols_update = string.Join (",", paramNames.Select (p => "`" + p + "` = @" + p));
-				var b = new StringBuilder ();
-				b.Append ("INSERT INTO `").Append (TableName).Append ("` (`").Append (cols).Append ("`,`").Append (k).Append ("`) VALUES (")
-				 .Append (cols_params).Append (", @").Append (k)
-				 .Append (") ON DUPLICATE KEY UPDATE ").Append ("`").Append (k).Append ("` = LAST_INSERT_ID(`").Append (k).Append ("`)")
-				 .Append (", ").Append (cols_update).Append (";SELECT LAST_INSERT_ID()");
+				string cols_update = string.Join (",", paramNames.Select (p => $"`{p}` = @{p}"));
+				var sql = $@"
+INSERT INTO `{TableName}` (`{cols}`,`{k}`) VALUES ({cols_params}, @{k})
+ON DUPLICATE KEY UPDATE `{k}` = LAST_INSERT_ID(`{k}`), {cols_update}; SELECT LAST_INSERT_ID()";
 				var parameters = new DynamicParameters (data);
 				parameters.AddDynamicParams (key);
-				var id = (await database.QueryAsync (b.ToString (), parameters).ConfigureAwait (false)).Single () as IDictionary<string, object>;
+				var id = (await database.QueryAsync (sql, parameters).ConfigureAwait (false)).Single () as IDictionary<string, object>;
 
 				return Convert.ToInt64 (id.Values.Single ());
 			}
@@ -110,7 +101,7 @@ namespace Dapper
 			/// <returns></returns>
 			public async Task<bool> DeleteAsync (TId id)
 			{
-				return (await database.ExecuteAsync ("DELETE FROM `" + TableName + "` WHERE Id = @id", new { id }).ConfigureAwait (false)) > 0;
+				return (await database.ExecuteAsync ($"DELETE FROM `{TableName}` WHERE Id = @id", new { id }).ConfigureAwait (false)) > 0;
 			}
 
 			/// <summary>
@@ -120,8 +111,15 @@ namespace Dapper
 			/// <returns></returns>
 			public async Task<T> GetAsync (TId id)
 			{
-				return (await database.QueryAsync<T> ("select * from `" + TableName + "` where Id = @id", new { id }).ConfigureAwait (false)).FirstOrDefault ();
+				return (await database.QueryAsync<T> ($"SELECT * FROM `{TableName}` WHERE id = @id", new { id }).ConfigureAwait (false)).FirstOrDefault ();
 			}
+
+			/// <summary>
+			/// Grab a record with where clause from the DB 
+			/// </summary>
+			/// <param name="where"></param>
+			/// <returns></returns>
+			public async Task<T> GetAsync (dynamic where) => (await FirstAsync (where));
 
 			/// <summary>
 			/// Firsts the async.
@@ -130,10 +128,11 @@ namespace Dapper
 			/// <param name="where">Where.</param>
 			public virtual async Task<T> FirstAsync (dynamic where = null)
 			{
-				if (where == null) return database.Query<T> ("SELECT * FROM `" + TableName + "` LIMIT 1").FirstOrDefault ();
-				var paramNames = GetParamNames ((object)where);
-				var w = string.Join (" AND ", paramNames.Select (p => "`" + p + "` = @" + p));
-				return (await database.QueryAsync<T> ("SELECT * FROM `" + TableName + "` WHERE " + w + " LIMIT 1").ConfigureAwait (false)).FirstOrDefault ();
+				if (where == null) return database.Query<T> ($"SELECT * FROM `{TableName}` LIMIT 1").FirstOrDefault ();
+				var owhere = where as object;
+				var paramNames = GetParamNames (owhere);
+				var w = string.Join (" AND ", paramNames.Select (p => $"`{p}` = @{p}"));
+				return (await database.QueryAsync<T> ($"SELECT * FROM `{TableName}` WHERE {w} LIMIT 1", owhere).ConfigureAwait (false)).FirstOrDefault ();
 			}
 
 			/// <summary>
@@ -141,13 +140,13 @@ namespace Dapper
 			/// </summary>
 			/// <returns>The async.</returns>
 			/// <param name="where">Where.</param>
-			public Task<IEnumerable<T>> AllAsync (dynamic where = null)
+			public async Task<IEnumerable<T>> AllAsync (dynamic where = null)
 			{
 				var sql = "SELECT * FROM " + TableName;
-				if (where == null) return database.QueryAsync<T> (sql);
+				if (where == null) return (await database.QueryAsync<T> (sql).ConfigureAwait(false));
 				var paramNames = GetParamNames ((object)where);
-				var w = string.Join (" AND ", paramNames.Select (p => "`" + p + "` = @" + p));
-				return database.QueryAsync<T> (sql + " WHERE " + w, where);
+				var w = string.Join (" AND ", paramNames.Select (p => $"`{p}` = @{p}"));
+				return (await database.QueryAsync<T> (sql + " WHERE " + w, where).ConfigureAwait(false));
 			}
 		}
 
