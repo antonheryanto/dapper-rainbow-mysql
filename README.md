@@ -1,55 +1,58 @@
 Dapper.Rainbow.MySql
 =======================
 
-This project is a reimplementation of Dapper.Rainbow designed for MySql. It is an addon that gives you basic crud operations while having to write even less sql.
+Implementation of Dapper.Rainbow targeting MySql,
+with addons that gives you basic crud operations while having to write even less sql.
 
-    class User {
+Table of Contents
+=================
+* [Usage](#usage)
+* [How to find the tables](#how-to-find-the-tables)
+* [API](#api)
+* [Change Log](#changelog)
+
+Usage
+-----
+```cs
+    public class User {
       public int Id { get; set; }
-      public String Email { get; set; }
-      public String Password { get; set; }
-      public String Name { get; set; }
+      public string Email { get; set; }
+      public string Password { get; set; }
+      public string Name { get; set; }
     }
     
-    class UserDB : Database<UserDB> {
+    public class Db : Database<Db> {
       public Table<User> Users { get; set; }
     }
     
-    class Demo {
-      public void Do(){
-        using(var conn = new MysqlConnection(connectionString)){
-          conn.Open();
-          var db = UserDB.Init(conn, commandTimeout: 2);
-          
-          //drop the table if it exists
-          db.Execute ("drop table if exists user;");
-          
-          //create the table
-          db.Execute (@"create table user (
-  							Id int NOT NULL,
-  							Email varchar(100), 
-  							Password varchar(32), 
-  							Name varchar(32), 
-  							PRIMARY KEY(Id));");
-          
-          /* 
-            
-            Do somthing interesting in here 
-          
-          */
-        }
+    public static class Current {
+      public Db DbInit()
+      {
+        var conn = new MysqlConnection(connectionString)){
+        conn.Open();
+        return UserDB.Init(conn, commandTimeout: 30);
       }
     }
+    
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            var u = Current.Db.Users.Get(1);
+            System.Console.WriteLine($"got user Id {u.Id} with name {u.Name}");
+        }
+    }
+```
 
-
-How it finds the tables
-------------
+How to find the tables
+----------------------
 
 Dapper.Rainbow.MySql knows what table to query based on the name of the class. 
 In this situation the table that Rainbow looks in is the User table. It is not
 pluralized. 
 
 API
-----------
+---
     
 ### Get All The Users
     IEnumerable<User> all = db.Users.All();
@@ -78,3 +81,19 @@ API
     user.Name = "Foolio Jr."
     int uid = db.Users.Update(uid, user);
     int uid = db.Users.Update(new {Id = uid}, user);
+
+ChangeLog
+---------
+### 0.8.2
+* Fix First and All API where its return dynamic instead of T
+* Fix tests and add more test for old API and async API
+
+### 0.8.1
+* Improve netstandard1.6 dependency (based on Dapper.contrib)
+* Add missing xmldocs
+
+### 0.8.0
+* Sync with changes in latest dapper.rainbow
+* Add Async Methods
+* Separated into multiple files using partial class
+* support net451 and netstandard1.6
