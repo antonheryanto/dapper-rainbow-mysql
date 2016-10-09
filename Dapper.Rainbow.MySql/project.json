@@ -11,7 +11,7 @@
       "url": "https://github.com/antonheryanto/dapper-rainbow-mysql"
     }
   },
-  "version": "0.8.1",
+  "version": "0.8.2",
   "authors": [ "Sam Saffron", "Marc Gravell", "Nick Craver", "Anton Heryanto" ],
   "description": "Trivial micro-orm implemented on Dapper, provides with CRUD helpers. specialize to handle MySql",
   "title": "Dapper Rainbow MySql",
