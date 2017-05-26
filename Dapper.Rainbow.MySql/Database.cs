@@ -203,7 +203,7 @@ ON DUPLICATE KEY UPDATE `{k}` = LAST_INSERT_ID(`{k}`), {cols_update}; SELECT LAS
 			/// <returns></returns>
 			public IEnumerable<T> All (dynamic where = null)
 			{
-				var sql = $"SELECT * FROM {TableName}";
+				var sql = $"SELECT * FROM `{TableName}`";
 				if (where == null) return database.Query<T> (sql);
 				var paramNames = GetParamNames ((object)where);
 				var w = string.Join (" AND ", paramNames.Select (p => $"`{p}` = @{p}"));
