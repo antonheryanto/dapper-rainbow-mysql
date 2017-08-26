@@ -143,6 +143,7 @@ ON DUPLICATE KEY UPDATE `{k}` = LAST_INSERT_ID(`{k}`), {cols_update}; SELECT LAS
             {
                 var sql = "SELECT * FROM " + TableName;
                 if (where == null) return (await database.QueryAsync<T>(sql).ConfigureAwait(false));
+
                 var paramNames = GetParamNames((object)where);
                 var w = string.Join(" AND ", paramNames.Select(p => $"`{p}` = @{p}"));
                 return await database.QueryAsync<T>(sql + " WHERE " + w, where).ConfigureAwait(false);

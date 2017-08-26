@@ -1,8 +1,10 @@
 *.userprefs
 *.config
 *.nupkg
+.vs
 .hg
 .hgignore
 bin
 obj
 packages
+report.html
