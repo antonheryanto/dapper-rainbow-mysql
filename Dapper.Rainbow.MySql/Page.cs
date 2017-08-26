@@ -47,7 +47,7 @@ namespace Dapper
 				g = m.Groups [0];
 				sqlCount = sqlCount.Substring (0, g.Index) + sqlCount.Substring (g.Index + g.Length);
 			}
-			var total = SqlMapper.Query<long> (connection, sqlCount, param as object).FirstOrDefault ();
+			var total = _connection.QueryFirstOrDefault<long> (sqlCount, param as object);
 
 			sqlPage = sql + "\n LIMIT @limit OFFSET @offset";
 			pageParam = new DynamicParameters (param);
@@ -57,7 +57,7 @@ namespace Dapper
 			if (total % itemsPerPage != 0) totalPage++;
 			long pageDisplayed = page + totalPageDisplayed;
 			if (pageDisplayed > totalPage) pageDisplayed = totalPage;
-			var p = new Page<T> {
+			return new Page<T> {
 				ItemsPerPage = itemsPerPage,
 				CurrentPage = page,
 				PageDisplayed = pageDisplayed,
@@ -68,7 +68,6 @@ namespace Dapper
 				HasNext = page + 1 <= totalPage,
 				TotalItems = total
 			};
-			return p;
 		}
 
 		/// <summary>
@@ -81,10 +80,8 @@ namespace Dapper
 		/// <typeparam name="T">The 1st type parameter.</typeparam>
 		public Page<T> Page<T> (string sql, int page = 1, dynamic param = null, int itemsPerPage = 10)
 		{
-			string sqlPage;
-			DynamicParameters pageParam;
-			var p = Page<T> (sql, page, param, itemsPerPage, out sqlPage, out pageParam);
-			p.Items = SqlMapper.Query<T> (connection, sqlPage, pageParam).ToList ();
+            var p = Page<T>(sql, page, param, itemsPerPage, out string sqlPage, out DynamicParameters pageParam);
+            p.Items = _connection.Query<T> (sqlPage, pageParam).ToList ();
 			return p;
 		}
 
@@ -114,10 +111,8 @@ namespace Dapper
 		/// <typeparam name="TReturn">The 3rd type parameter.</typeparam>
 		public Page<TReturn> Page<TFirst, TSecond, TReturn> (string sql, Func<TFirst, TSecond, TReturn> map, int page = 1, dynamic param = null, int itemsPerPage = 10, string splitOn = "Id")
 		{
-			string sqlPage;
-			DynamicParameters pageParam;
-			var p = Page<TReturn> (sql, page, param, itemsPerPage, out sqlPage, out pageParam);
-			p.Items = SqlMapper.Query (connection, sqlPage, map, pageParam, splitOn: splitOn).ToList ();
+            var p = Page<TReturn>(sql, page, param, itemsPerPage, out string sqlPage, out DynamicParameters pageParam);
+            p.Items = _connection.Query (sqlPage, map, pageParam, splitOn: splitOn).ToList ();
 			return p;
 		}
 
@@ -136,10 +131,8 @@ namespace Dapper
 		/// <typeparam name="TReturn">The 4th type parameter.</typeparam>
 		public Page<TReturn> Page<TFirst, TSecond, TThird, TReturn> (string sql, Func<TFirst, TSecond, TThird, TReturn> map, int page, dynamic param = null, int itemsPerPage = 10, string splitOn = "Id")
 		{
-			string sqlPage;
-			DynamicParameters pageParam;
-			var p = Page<TReturn> (sql, page, param, itemsPerPage, out sqlPage, out pageParam);
-			p.Items = SqlMapper.Query (connection, sqlPage, map, pageParam, splitOn: splitOn).ToList ();
+            var p = Page<TReturn>(sql, page, param, itemsPerPage, out string sqlPage, out DynamicParameters pageParam);
+            p.Items = _connection.Query (sqlPage, map, pageParam, splitOn: splitOn).ToList ();
 			return p;
 		}
 
@@ -159,10 +152,8 @@ namespace Dapper
 		/// <typeparam name="TReturn">The 5th type parameter.</typeparam>
 		public Page<TReturn> Page<TFirst, TSecond, TThird, TFourth, TReturn> (string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, int page = 1, dynamic param = null, int itemsPerPage = 10, string splitOn = "Id")
 		{
-			string sqlPage;
-			DynamicParameters pageParam;
-			var p = Page<TReturn> (sql, page, param, itemsPerPage, out sqlPage, out pageParam);
-			p.Items = SqlMapper.Query (connection, sqlPage, map, pageParam, splitOn: splitOn).ToList ();
+            var p = Page<TReturn>(sql, page, param, itemsPerPage, out string sqlPage, out DynamicParameters pageParam);
+            p.Items = _connection.Query (sqlPage, map, pageParam, splitOn: splitOn).ToList ();
 			return p;
 		}
 
@@ -183,18 +174,17 @@ namespace Dapper
 		/// <typeparam name="TReturn">The 6th type parameter.</typeparam>
 		public Page<TReturn> Page<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> (string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, int page = 1, dynamic param = null, int itemsPerPage = 10, string splitOn = "Id")
 		{
-			string sqlPage;
-			DynamicParameters pageParam;
-			var p = Page<TReturn> (sql, page, param, itemsPerPage, out sqlPage, out pageParam);
-			p.Items = SqlMapper.Query (connection, sqlPage, map, pageParam, splitOn: splitOn).ToList ();
+            var p = Page<TReturn>(sql, page, param, itemsPerPage, out string sqlPage, out DynamicParameters pageParam);
+            p.Items = _connection.Query (sqlPage, map, pageParam, splitOn: splitOn).ToList ();
 			return p;
 		}
 	}
 
-	/// <summary>
-	/// Page.
-	/// </summary>
-	public class Page<T>
+    /// <summary>
+    /// Paging Class
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public class Page<T>
 	{
 		/// <summary>
 		/// Gets or sets the items per page.

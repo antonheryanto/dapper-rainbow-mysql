@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.CSharp;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Dynamic;
@@ -79,11 +80,11 @@ namespace Test
 		}
 
 		[Test]
-		public void UpdateAsyncTest ()
+		public async Task UpdateAsyncTest ()
 		{
-			var id = 1;
-			var city = "Kajang";
-			db.Profiles.UpdateAsync (id, new { city });
+            const int id = 1;
+            const string city = "Kajang";
+			await db.Profiles.UpdateAsync (id, new { city });
 			AreEqual (city, db.Profiles.Get (id).City);
 		}
 
@@ -151,7 +152,7 @@ namespace Test
                 Key(SessionId)
             );");
 
-			if (db.Profiles.All ().Count () == 0) {
+			if (!db.Profiles.All ().Any ()) {
 				db.Profiles.Insert (new { Address = "Alam Sari", City = "Kajang", PostCode = 43000, FacultyId = 1 });
 			}
 		}
@@ -204,8 +205,8 @@ namespace Test
 
 		public void AddRange (dynamic param)
 		{
-			if (param as object == null) return;
-			foreach (var property in System.ComponentModel.TypeDescriptor.GetProperties (param.GetType ()))
+			if (param is null) return;
+			foreach (var property in System.ComponentModel.TypeDescriptor.GetProperties (param?.GetType ()))
 				members.Add (property.Name, property.GetValue (param));
 		}
 

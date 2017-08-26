@@ -2,535 +2,302 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Text;
 
 namespace Dapper
 {
-	/// <summary>
-	/// A container for a database, assumes all the tables have an Id column named Id
-	/// </summary>
-	/// <typeparam name="TDatabase"></typeparam>
-	public abstract partial class Database<TDatabase> : IDisposable where TDatabase : Database<TDatabase>, new()
-	{
-		/// <summary>
-		/// A container for table with table type and id type
-		/// <typeparam name="T"></typeparam>
-		/// <typeparam name="TId"></typeparam>
-		/// </summary>
-		public partial class Table<T, TId>
-		{
-			internal Database<TDatabase> database;
-			internal string tableName;
-			internal string likelyTableName;
+    /// <summary>
+    /// Represents a database, assumes all the tables have an Id column named Id
+    /// </summary>
+    /// <typeparam name="TDatabase">The type of database this represents.</typeparam>
+    public abstract partial class Database<TDatabase> : IDisposable where TDatabase : Database<TDatabase>, new()
+    {
+        private DbConnection _connection;
+        private int _commandTimeout;
+        private DbTransaction _transaction;
+        private bool _lowerCase = true;
 
-			/// <summary>
-			/// Initializes a new instance of the <see cref="T:Dapper.Database`1.Table`2"/> class.
-			/// </summary>
-			/// <param name="database">Database.</param>
-			/// <param name="likelyTableName">Likely table name.</param>
-			public Table (Database<TDatabase> database, string likelyTableName)
-			{
-				this.database = database;
-				this.likelyTableName = likelyTableName;
-			}
+        /// <summary>
+        /// Initializes the database.
+        /// </summary>
+        /// <param name="connection">The connection to use.</param>
+        /// <param name="commandTimeout">The timeout to use (in seconds).</param>
+        /// <param name="lowerCase">opted for lowercase table name</param>
+        /// <returns></returns>
+        public static TDatabase Init(DbConnection connection, int commandTimeout, bool lowerCase = true)
+        {
+            TDatabase db = new TDatabase();
+            db.InitDatabase(connection, commandTimeout, lowerCase);
+            return db;
+        }
 
-			/// <summary>
-			/// Gets the name of the table.
-			/// </summary>
-			/// <value>The name of the table.</value>
-			public string TableName {
-				get {
-					tableName = tableName ?? database.DetermineTableName<T> (likelyTableName);
-					return tableName;
-				}
-			}
+        internal static Action<TDatabase> tableConstructor;
 
-			/// <summary>
-			/// Insert a row into the db
-			/// </summary>
-			/// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
-			/// <returns></returns>
-			public virtual long Insert (dynamic data)
-			{
-				var o = (object)data;
-				List<string> paramNames = GetParamNames (o);
-				paramNames.Remove ("Id");
+        internal void InitDatabase(DbConnection connection, int commandTimeout, bool lowerCase)
+        {
+            _connection = connection;
+            _commandTimeout = commandTimeout;
+            _lowerCase = lowerCase;
+            tableConstructor = tableConstructor ?? CreateTableConstructorForTable();
 
-				string cols = string.Join ("`,`", paramNames);
-				string cols_params = string.Join (",", paramNames.Select (p => "@" + p));
-				var sql = $"INSERT INTO `{TableName}` (`{cols}`) VALUES ({cols_params}); SELECT LAST_INSERT_ID()";
-				var id = database.Query (sql, o).Single () as IDictionary<string, object>;
-				return Convert.ToInt64 (id.Values.Single ());
-			}
+            tableConstructor(this as TDatabase);
+        }
 
-			/// <summary>
-			/// Update a record in the DB
-			/// </summary>
-			/// <param name="id"></param>
-			/// <param name="data"></param>
-			/// <returns></returns>
-			public int Update (TId id, dynamic data) => Update (new { id }, data);
+        internal virtual Action<TDatabase> CreateTableConstructorForTable()
+        {
+            return CreateTableConstructor(typeof(Table<>), typeof(Table<,>));
+        }
 
-			/// <summary>
-			/// Update a record in the DB
-			/// </summary>
-			/// <param name="where"></param>
-			/// <param name="data"></param>
-			/// <returns></returns>
-			public int Update (dynamic where, dynamic data)
-			{
-				List<string> paramNames = GetParamNames ((object)data);
-				List<string> keys = GetParamNames ((object)where);
+        /// <summary>
+        /// Begins a transaction in this database.
+        /// </summary>
+        /// <param name="isolation">The isolation level to use.</param>
+        public void BeginTransaction(IsolationLevel isolation = IsolationLevel.ReadCommitted)
+        {
+            _transaction = _connection.BeginTransaction(isolation);
+        }
 
-				var cols_update = string.Join (",", paramNames.Select (p => $"`{p}`= @{p}"));
-				var cols_where = string.Join (" AND ", keys.Select (p => $"`{p}` = @{p}"));
-				var sql = $"UPDATE `{TableName}` SET {cols_update} WHERE {cols_where}";
+        /// <summary>
+        /// Commits the current transaction in this database.
+        /// </summary>
+        public void CommitTransaction()
+        {
+            _transaction.Commit();
+            _transaction = null;
+        }
 
-				var parameters = new DynamicParameters (data);
-				parameters.AddDynamicParams (where);
-				return database.Execute (sql, parameters);
-			}
+        /// <summary>
+        /// Rolls back the current transaction in this database.
+        /// </summary>
+        public void RollbackTransaction()
+        {
+            _transaction.Rollback();
+            _transaction = null;
+        }
 
-			/// <summary>
-			/// Insert a row into the db or update when key is duplicated 
-			/// only for autoincrement key
-			/// </summary>
-			/// <param name="id"></param>
-			/// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
-			/// <returns></returns>
-			public long InsertOrUpdate (TId id, dynamic data) => InsertOrUpdate (new { id }, data);
+        /// <summary>
+        /// Gets a table creation function for the specified type.
+        /// </summary>
+        /// <param name="tableType">The object type to create a table for.</param>
+        /// <returns>The function to create the <paramref name="tableType"/> table.</returns>
+        protected Action<TDatabase> CreateTableConstructor(Type tableType)
+        {
+            return CreateTableConstructor(new[] { tableType });
+        }
 
-			/// <summary>
-			/// Insert a row into the db or update when key is duplicated 
-			/// for autoincrement key
-			/// </summary>
-			/// <param name="key"></param>
-			/// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
-			/// <returns></returns>
-			public long InsertOrUpdate (dynamic key, dynamic data)
-			{
-				List<string> paramNames = GetParamNames ((object)data);
-				string k = GetParamNames ((object)key).Single ();
+        /// <summary>
+        /// Gets a table creation function for the specified types.
+        /// </summary>
+        /// <param name="tableTypes">The object types to create a table for.</param>
+        /// <returns>The function to create the <paramref name="tableTypes"/> tables.</returns>
+        protected Action<TDatabase> CreateTableConstructor(params Type[] tableTypes)
+        {
+            var dm = new DynamicMethod("ConstructInstances", null, new[] { typeof(TDatabase) }, true);
+            var il = dm.GetILGenerator();
 
-				string cols = string.Join ("`,`", paramNames);
-				string cols_params = string.Join (",", paramNames.Select (p => "@" + p));
-				string cols_update = string.Join (",", paramNames.Select (p => $"`{p}` = @{p}"));
-				var sql = $@"
-INSERT INTO `{TableName}` (`{cols}`,`{k}`) VALUES ({cols_params}, @{k})
-ON DUPLICATE KEY UPDATE `{k}` = LAST_INSERT_ID(`{k}`), {cols_update}; SELECT LAST_INSERT_ID()";
-				var parameters = new DynamicParameters (data);
-				parameters.AddDynamicParams (key);
-				var id = database.Query (sql, parameters).Single () as IDictionary<string, object>;
-				return Convert.ToInt64 (id.Values.Single ());
-			}
+            var setters = GetType().GetProperties()
+                .Where(p => p.PropertyType.IsGenericType() && tableTypes.Contains(p.PropertyType.GetGenericTypeDefinition()))
+                .Select(p => Tuple.Create(
+                        p.GetSetMethod(true),
+                        p.PropertyType.GetConstructor(new[] { typeof(TDatabase), typeof(string) }),
+                        p.Name,
+                        p.DeclaringType
+                 ));
 
-			/// <summary>
-			/// Insert a row into the db
-			/// </summary>
-			/// <param name="data">Either DynamicParameters or an anonymous type or concrete type</param>
-			/// <returns></returns>
-			public int InsertOrUpdate (dynamic data)
-			{
-				List<string> paramNames = GetParamNames ((object)data);
-				string cols = string.Join ("`,`", paramNames);
-				string cols_params = string.Join (",", paramNames.Select (p => "@" + p));
-				string cols_update = string.Join (",", paramNames.Select (p => $"`{p}` = @{p}"));
-				var sql = $"INSERT INTO `{TableName}` (`{cols}`) VALUES ({cols_params}) ON DUPLICATE KEY UPDATE {cols_update}";
-				return database.Execute (sql, data);
-			}
+            foreach (var setter in setters) {
+                il.Emit(OpCodes.Ldarg_0);
+                // [db]
 
-			/// <summary>
-			/// Delete a record for the DB
-			/// </summary>
-			/// <param name="id"></param>
-			/// <returns></returns>
-			public bool Delete (TId id)
-			{
-				return database.Execute ($"DELETE FROM `{TableName}` WHERE Id = @id", new { id }) > 0;
-			}
+                il.Emit(OpCodes.Ldstr, setter.Item3);
+                // [db, likelyname]
 
-			/// <summary>
-			/// Delete a record for the DB
-			/// </summary>
-			/// <param name="where"></param>
-			/// <returns></returns>
-			public bool Delete (dynamic where = null)
-			{
-				if (where == null) return database.Execute ($"TRUNCATE `{TableName}`") > 0;
-				var owhere = where as object;
-				var paramNames = GetParamNames (owhere);
-				var w = string.Join (" AND ", paramNames.Select (p => $"`{p}` = @{p}"));
-				return database.Execute ($"DELETE FROM `{TableName}` WHERE {w}", owhere) > 0;
-			}
+                il.Emit(OpCodes.Newobj, setter.Item2);
+                // [table]
 
-			/// <summary>
-			/// Grab a record with a particular Id from the DB 
-			/// </summary>
-			/// <param name="id"></param>
-			/// <returns></returns>
-			public T Get (TId id)
-			{
-				return database.Query<T> ($"SELECT * FROM `{TableName}` WHERE id = @id", new { id }).FirstOrDefault ();
-			}
+                var table = il.DeclareLocal(setter.Item2.DeclaringType);
+                il.Emit(OpCodes.Stloc, table);
+                // []
 
-			/// <summary>
-			/// Grab a record with where clause from the DB 
-			/// </summary>
-			/// <param name="where"></param>
-			/// <returns></returns>
-			public T Get (dynamic where) => First (where);
+                il.Emit(OpCodes.Ldarg_0);
+                // [db]
 
-			/// <summary>
-			/// Grab a first record
-			/// </summary>
-			/// <param name="where"></param>
-			/// <returns></returns>
-			public T First (dynamic where = null)
-			{
-				if (where == null) return database.Query<T> ($"SELECT * FROM `{TableName}` LIMIT 1").FirstOrDefault ();
-				var owhere = where as object;
-				var paramNames = GetParamNames (owhere);
-				var w = string.Join (" AND ", paramNames.Select (p => $"`{p}` = @{p}"));
-				return database.Query<T> ($"SELECT * FROM `{TableName}` WHERE {w} LIMIT 1", owhere).FirstOrDefault();
-			}
+                il.Emit(OpCodes.Castclass, setter.Item4);
+                // [db cast to container]
 
-			/// <summary>
-			/// Return All record
-			/// </summary>
-			/// <param name="where"></param>
-			/// <returns></returns>
-			public IEnumerable<T> All (dynamic where = null)
-			{
-				var sql = $"SELECT * FROM `{TableName}`";
-				if (where == null) return database.Query<T> (sql);
-				var paramNames = GetParamNames ((object)where);
-				var w = string.Join (" AND ", paramNames.Select (p => $"`{p}` = @{p}"));
-				return database.Query<T> (sql + " WHERE " + w, where);
-			}
+                il.Emit(OpCodes.Ldloc, table);
+                // [db cast to container, table]
 
-			static ConcurrentDictionary<Type, List<string>> paramNameCache = new ConcurrentDictionary<Type, List<string>> ();
+                il.Emit(OpCodes.Callvirt, setter.Item1);
+                // []
+            }
 
-			internal static List<string> GetParamNames (object o)
-			{
-				if (o is DynamicParameters) {
-					return (o as DynamicParameters).ParameterNames.ToList ();
-				}
+            il.Emit(OpCodes.Ret);
+            return (Action<TDatabase>)dm.CreateDelegate(typeof(Action<TDatabase>));
+        }
 
-				List<string> paramNames;
-				if (!paramNameCache.TryGetValue (o.GetType (), out paramNames)) {
-					paramNames = new List<string> ();
-					foreach (var prop in o.GetType ().GetProperties (BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public)) {
-						var attribs = prop.GetCustomAttributes (typeof (IgnorePropertyAttribute), true);
-						var attr = attribs.FirstOrDefault () as IgnorePropertyAttribute;
-						if (attr == null || (attr != null && !attr.Value)) {
-							paramNames.Add (prop.Name);
-						}
-					}
-					paramNameCache [o.GetType ()] = paramNames;
-				}
-				return paramNames;
-			}
-		}
+        private static readonly ConcurrentDictionary<Type, string> tableNameMap = new ConcurrentDictionary<Type, string>();
+        private string DetermineTableName<T>(string likelyTableName)
+        {
+            if (!tableNameMap.TryGetValue(typeof(T), out string name)) {
+                name = !_lowerCase ? likelyTableName : likelyTableName.ToLower();
+                if (!TableExists(name)) {
+                    name = !_lowerCase ? typeof(T).Name : typeof(T).Name.ToLower();
+                }
 
-		/// <summary>
-		/// Table implementation using id long
-		/// </summary>
-		public class Table<T> : Table<T, long>
-		{
-			/// <summary>
-			/// Initializes a new instance of the <see cref="T:Dapper.Database`1.Table`1"/> class.
-			/// </summary>
-			/// <param name="database">Database.</param>
-			/// <param name="likelyTableName">Likely table name.</param>
-			public Table (Database<TDatabase> database, string likelyTableName)
-				: base (database, likelyTableName)
-			{
-			}
-		}
+                tableNameMap[typeof(T)] = name;
+            }
+            return name;
+        }
 
-		IDbConnection connection;
-		int commandTimeout;
-		IDbTransaction transaction;
-		bool lowerCase = true;
+        private bool TableExists(string name)
+        {
+            return _connection.Query("SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @name AND TABLE_SCHEMA = DATABASE()",
+                new { name }, _transaction).Count() == 1;
+        }
 
-		/// <summary>
-		/// Initiate Database
-		/// </summary>
-		/// <param name="connection"></param>
-		/// <param name="commandTimeout"></param>
-		/// <param name="lowerCase"></param>
-		/// <returns></returns>
-		public static TDatabase Init (IDbConnection connection, int commandTimeout, bool lowerCase = true)
-		{
-			TDatabase db = new TDatabase ();
-			db.InitDatabase (connection, commandTimeout, lowerCase);
-			return db;
-		}
+        /// <summary>
+        /// Executes SQL against the current database.
+        /// </summary>
+        /// <param name="sql">The SQL to execute.</param>
+        /// <param name="param">The parameters to use.</param>
+        /// <returns>The number of rows affected.</returns>
+        public int Execute(string sql, dynamic param = null) =>
+            _connection.Execute(sql, param as object, _transaction, _commandTimeout);
 
-		internal static Action<TDatabase> tableConstructor;
+        /// <summary>
+        /// Queries the current database.
+        /// </summary>
+        /// <typeparam name="T">The type to return.</typeparam>
+        /// <param name="sql">The SQL to execute.</param>
+        /// <param name="param">The parameters to use.</param>
+        /// <param name="buffered">Whether to buffer the results.</param>
+        /// <returns>An enumerable of <typeparamref name="T"/> for the rows fetched.</returns>
+        public IEnumerable<T> Query<T>(string sql, dynamic param = null, bool buffered = true) =>
+            _connection.Query<T>(sql, param as object, _transaction, buffered, _commandTimeout);
 
-		internal void InitDatabase (IDbConnection connection, int commandTimeout, bool lowerCase)
-		{
-			this.connection = connection;
-			this.commandTimeout = commandTimeout;
-			this.lowerCase = lowerCase;
-			if (tableConstructor == null) {
-				tableConstructor = CreateTableConstructorForTable ();
-			}
+        /// <summary>
+        /// Queries the current database for a single record.
+        /// </summary>
+        /// <typeparam name="T">The type to return.</typeparam>
+        /// <param name="sql">The SQL to execute.</param>
+        /// <param name="param">The parameters to use.</param>
+        /// <returns>An enumerable of <typeparamref name="T"/> for the rows fetched.</returns>
+        public T QueryFirstOrDefault<T>(string sql, dynamic param = null) =>
+            _connection.QueryFirstOrDefault<T>(sql, param as object, _transaction, _commandTimeout);
 
-			tableConstructor (this as TDatabase);
-		}
+        /// <summary>
+        /// Perform a multi-mapping query with 2 input types. 
+        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        /// </summary>
+        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        /// <typeparam name="TReturn">The combined type to return.</typeparam>
+        /// <param name="sql">The SQL to execute for this query.</param>
+        /// <param name="map">The function to map row types to the return type.</param>
+        /// <param name="param">The parameters to use for this query.</param>
+        /// <param name="transaction">The transaction to use for this query.</param>
+        /// <param name="buffered">Whether to buffer the results in memory.</param>
+        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        public IEnumerable<TReturn> Query<TFirst, TSecond, TReturn>(string sql, Func<TFirst, TSecond, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null) =>
+            _connection.Query(sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
 
-		internal virtual Action<TDatabase> CreateTableConstructorForTable ()
-		{
-			return CreateTableConstructor (typeof (Table<>));
-		}
+        /// <summary>
+        /// Perform a multi-mapping query with 3 input types. 
+        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        /// </summary>
+        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        /// <typeparam name="TReturn">The combined type to return.</typeparam>
+        /// <param name="sql">The SQL to execute for this query.</param>
+        /// <param name="map">The function to map row types to the return type.</param>
+        /// <param name="param">The parameters to use for this query.</param>
+        /// <param name="transaction">The transaction to use for this query.</param>
+        /// <param name="buffered">Whether to buffer the results in memory.</param>
+        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TReturn>(string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null) =>
+            _connection.Query(sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
 
-		/// <summary>
-		/// Begins the transaction.
-		/// </summary>
-		/// <param name="isolation">Isolation.</param>
-		public void BeginTransaction (IsolationLevel isolation = IsolationLevel.ReadCommitted)
-		{
-			transaction = connection.BeginTransaction (isolation);
-		}
+        /// <summary>
+        /// Perform a multi-mapping query with 4 input types. 
+        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        /// </summary>
+        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        /// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
+        /// <typeparam name="TReturn">The combined type to return.</typeparam>
+        /// <param name="sql">The SQL to execute for this query.</param>
+        /// <param name="map">The function to map row types to the return type.</param>
+        /// <param name="param">The parameters to use for this query.</param>
+        /// <param name="transaction">The transaction to use for this query.</param>
+        /// <param name="buffered">Whether to buffer the results in memory.</param>
+        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TReturn>(string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null) =>
+            _connection.Query(sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
 
-		/// <summary>
-		/// Commits the transaction.
-		/// </summary>
-		public void CommitTransaction ()
-		{
-			transaction.Commit ();
-			transaction = null;
-		}
+        /// <summary>
+        /// Perform a multi-mapping query with 5 input types. 
+        /// This returns a single type, combined from the raw types via <paramref name="map"/>.
+        /// </summary>
+        /// <typeparam name="TFirst">The first type in the recordset.</typeparam>
+        /// <typeparam name="TSecond">The second type in the recordset.</typeparam>
+        /// <typeparam name="TThird">The third type in the recordset.</typeparam>
+        /// <typeparam name="TFourth">The fourth type in the recordset.</typeparam>
+        /// <typeparam name="TFifth">The fifth type in the recordset.</typeparam>
+        /// <typeparam name="TReturn">The combined type to return.</typeparam>
+        /// <param name="sql">The SQL to execute for this query.</param>
+        /// <param name="map">The function to map row types to the return type.</param>
+        /// <param name="param">The parameters to use for this query.</param>
+        /// <param name="transaction">The transaction to use for this query.</param>
+        /// <param name="buffered">Whether to buffer the results in memory.</param>
+        /// <param name="splitOn">The field we should split and read the second object from (default: "Id").</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        /// <returns>An enumerable of <typeparamref name="TReturn"/>.</returns>
+        public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null) =>
+            _connection.Query(sql, map, param as object, transaction, buffered, splitOn, commandTimeout);
 
-		/// <summary>
-		/// Rollbacks the transaction.
-		/// </summary>
-		public void RollbackTransaction ()
-		{
-			transaction.Rollback ();
-			transaction = null;
-		}
+        /// <summary>
+        /// Return a sequence of dynamic objects with properties matching the columns
+        /// </summary>
+        /// <param name="sql">The SQL to execute.</param>
+        /// <param name="param">The parameters to use.</param>
+        /// <param name="buffered">Whether the results should be buffered in memory.</param>
+        /// <remarks>Note: each row can be accessed via "dynamic", or by casting to an IDictionary&lt;string,object&gt;</remarks>
+        public IEnumerable<dynamic> Query(string sql, dynamic param = null, bool buffered = true) =>
+            _connection.Query(sql, param as object, _transaction, buffered);
 
-		/// <summary>
-		/// Creates the table constructor.
-		/// </summary>
-		/// <returns>The table constructor.</returns>
-		/// <param name="tableType">Table type.</param>
-		protected Action<TDatabase> CreateTableConstructor (Type tableType)
-		{
-			var dm = new DynamicMethod ("ConstructInstances", null, new Type [] { typeof (TDatabase) }, true);
-			var il = dm.GetILGenerator ();
+        /// <summary>
+        /// Execute a command that returns multiple result sets, and access each in turn.
+        /// </summary>
+        /// <param name="sql">The SQL to execute for this query.</param>
+        /// <param name="param">The parameters to use for this query.</param>
+        /// <param name="transaction">The transaction to use for this query.</param>
+        /// <param name="commandTimeout">Number of seconds before command execution timeout.</param>
+        /// <param name="commandType">Is it a stored proc or a batch?</param>
+        public SqlMapper.GridReader QueryMultiple(string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null) =>
+            SqlMapper.QueryMultiple(_connection, sql, param, transaction, commandTimeout, commandType);
 
-			var setters = GetType ().GetProperties ()
-				.Where (p => p.PropertyType.GetTypeInfo ().IsGenericType && p.PropertyType.GetGenericTypeDefinition () == tableType)
-				.Select (p => Tuple.Create (
-						 p.GetSetMethod (true),
-						 p.PropertyType.GetConstructor (new Type [] { typeof (TDatabase), typeof (string) }),
-						 p.Name,
-						 p.DeclaringType
-				  ));
+        /// <summary>
+        /// Disposes the current database, rolling back current transactions.
+        /// </summary>
+        public void Dispose()
+        {
+            if (_connection?.State == ConnectionState.Closed) return;
 
-			foreach (var setter in setters) {
-				il.Emit (OpCodes.Ldarg_0);
-				// [db]
-
-				il.Emit (OpCodes.Ldstr, setter.Item3);
-				// [db, likelyname]
-
-				il.Emit (OpCodes.Newobj, setter.Item2);
-				// [table]
-
-				var table = il.DeclareLocal (setter.Item2.DeclaringType);
-				il.Emit (OpCodes.Stloc, table);
-				// []
-
-				il.Emit (OpCodes.Ldarg_0);
-				// [db]
-
-				il.Emit (OpCodes.Castclass, setter.Item4);
-				// [db cast to container]
-
-				il.Emit (OpCodes.Ldloc, table);
-				// [db cast to container, table]
-
-				il.Emit (OpCodes.Callvirt, setter.Item1);
-				// []
-			}
-
-			il.Emit (OpCodes.Ret);
-			return (Action<TDatabase>)dm.CreateDelegate (typeof (Action<TDatabase>));
-		}
-
-		static ConcurrentDictionary<Type, string> tableNameMap = new ConcurrentDictionary<Type, string> ();
-		private string DetermineTableName<T> (string likelyTableName)
-		{
-			string name;
-
-			if (!tableNameMap.TryGetValue (typeof (T), out name)) {
-				name = !lowerCase ? likelyTableName : likelyTableName.ToLower ();
-				if (!TableExists (name)) {
-					name = !lowerCase ? typeof (T).Name : typeof (T).Name.ToLower ();
-				}
-
-				tableNameMap [typeof (T)] = name;
-			}
-			return name;
-		}
-
-		private bool TableExists (string name)
-		{
-			return connection.Query ("SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @name AND TABLE_SCHEMA = DATABASE()",
-				new { name }, transaction: transaction).Count () == 1;
-		}
-
-		/// <summary>
-		/// Execute the specified sql and param.
-		/// </summary>
-		/// <param name="sql">Sql.</param>
-		/// <param name="param">Parameter.</param>
-		public int Execute (string sql, dynamic param = null)
-		{
-			return SqlMapper.Execute (connection, sql, param as object, transaction, commandTimeout: this.commandTimeout);
-		}
-
-		/// <summary>
-		/// Query the specified sql, param and buffered.
-		/// </summary>
-		/// <param name="sql">Sql.</param>
-		/// <param name="param">Parameter.</param>
-		/// <param name="buffered">If set to <c>true</c> buffered.</param>
-		/// <typeparam name="T">The 1st type parameter.</typeparam>
-		public IEnumerable<T> Query<T> (string sql, dynamic param = null, bool buffered = true)
-		{
-
-			return SqlMapper.Query<T> (connection, sql, param as object, transaction, buffered, commandTimeout);
-		}
-
-		/// <summary>
-		/// Query the specified sql, map, param, transaction, buffered, splitOn and commandTimeout.
-		/// </summary>
-		/// <param name="sql">Sql.</param>
-		/// <param name="map">Map.</param>
-		/// <param name="param">Parameter.</param>
-		/// <param name="transaction">Transaction.</param>
-		/// <param name="buffered">If set to <c>true</c> buffered.</param>
-		/// <param name="splitOn">Split on.</param>
-		/// <param name="commandTimeout">Command timeout.</param>
-		/// <typeparam name="TFirst">The 1st type parameter.</typeparam>
-		/// <typeparam name="TSecond">The 2nd type parameter.</typeparam>
-		/// <typeparam name="TReturn">The 3rd type parameter.</typeparam>
-		public IEnumerable<TReturn> Query<TFirst, TSecond, TReturn> (string sql, Func<TFirst, TSecond, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
-		{
-			return SqlMapper.Query (connection, sql, map, param as object, transaction, buffered, splitOn);
-		}
-
-		/// <summary>
-		/// Query the specified sql, map, param, transaction, buffered, splitOn and commandTimeout.
-		/// </summary>
-		/// <param name="sql">Sql.</param>
-		/// <param name="map">Map.</param>
-		/// <param name="param">Parameter.</param>
-		/// <param name="transaction">Transaction.</param>
-		/// <param name="buffered">If set to <c>true</c> buffered.</param>
-		/// <param name="splitOn">Split on.</param>
-		/// <param name="commandTimeout">Command timeout.</param>
-		/// <typeparam name="TFirst">The 1st type parameter.</typeparam>
-		/// <typeparam name="TSecond">The 2nd type parameter.</typeparam>
-		/// <typeparam name="TThird">The 3rd type parameter.</typeparam>
-		/// <typeparam name="TReturn">The 4th type parameter.</typeparam>
-		public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TReturn> (string sql, Func<TFirst, TSecond, TThird, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
-		{
-			return SqlMapper.Query (connection, sql, map, param as object, transaction, buffered, splitOn);
-		}
-
-		/// <summary>
-		/// Query the specified sql, map, param, transaction, buffered, splitOn and commandTimeout.
-		/// </summary>
-		/// <param name="sql">Sql.</param>
-		/// <param name="map">Map.</param>
-		/// <param name="param">Parameter.</param>
-		/// <param name="transaction">Transaction.</param>
-		/// <param name="buffered">If set to <c>true</c> buffered.</param>
-		/// <param name="splitOn">Split on.</param>
-		/// <param name="commandTimeout">Command timeout.</param>
-		/// <typeparam name="TFirst">The 1st type parameter.</typeparam>
-		/// <typeparam name="TSecond">The 2nd type parameter.</typeparam>
-		/// <typeparam name="TThird">The 3rd type parameter.</typeparam>
-		/// <typeparam name="TFourth">The 4th type parameter.</typeparam>
-		/// <typeparam name="TReturn">The 5th type parameter.</typeparam>
-		public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TReturn> (string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
-		{
-			return SqlMapper.Query (connection, sql, map, param as object, transaction, buffered, splitOn);
-		}
-
-		/// <summary>
-		/// Query the specified sql, map, param, transaction, buffered, splitOn and commandTimeout.
-		/// </summary>
-		/// <param name="sql">Sql.</param>
-		/// <param name="map">Map.</param>
-		/// <param name="param">Parameter.</param>
-		/// <param name="transaction">Transaction.</param>
-		/// <param name="buffered">If set to <c>true</c> buffered.</param>
-		/// <param name="splitOn">Split on.</param>
-		/// <param name="commandTimeout">Command timeout.</param>
-		/// <typeparam name="TFirst">The 1st type parameter.</typeparam>
-		/// <typeparam name="TSecond">The 2nd type parameter.</typeparam>
-		/// <typeparam name="TThird">The 3rd type parameter.</typeparam>
-		/// <typeparam name="TFourth">The 4th type parameter.</typeparam>
-		/// <typeparam name="TFifth">The 5th type parameter.</typeparam>
-		/// <typeparam name="TReturn">The 6th type parameter.</typeparam>
-		public IEnumerable<TReturn> Query<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> (string sql, Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map, dynamic param = null, IDbTransaction transaction = null, bool buffered = true, string splitOn = "Id", int? commandTimeout = null)
-		{
-			return SqlMapper.Query (connection, sql, map, param as object, transaction, buffered, splitOn);
-		}
-
-		/// <summary>
-		/// Query the specified sql, param and buffered.
-		/// </summary>
-		/// <param name="sql">Sql.</param>
-		/// <param name="param">Parameter.</param>
-		/// <param name="buffered">If set to <c>true</c> buffered.</param>
-		public IEnumerable<dynamic> Query (string sql, dynamic param = null, bool buffered = true)
-		{
-			return SqlMapper.Query (connection, sql, param as object, transaction, buffered);
-		}
-
-		/// <summary>
-		/// Queries the multiple.
-		/// </summary>
-		/// <returns>The multiple.</returns>
-		/// <param name="sql">Sql.</param>
-		/// <param name="param">Parameter.</param>
-		/// <param name="transaction">Transaction.</param>
-		/// <param name="commandTimeout">Command timeout.</param>
-		/// <param name="commandType">Command type.</param>
-		public Dapper.SqlMapper.GridReader QueryMultiple (string sql, dynamic param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
-		{
-			return SqlMapper.QueryMultiple (connection, sql, param, transaction, commandTimeout, commandType);
-		}
-
-		/// <summary>
-		/// Releases all resource used by the <see cref="T:Dapper.Database`1"/> object.
-		/// </summary>
-		/// <remarks>Call <see cref="Dispose"/> when you are finished using the <see cref="T:Dapper.Database`1"/>. The
-		/// <see cref="Dispose"/> method leaves the <see cref="T:Dapper.Database`1"/> in an unusable state. After calling
-		/// <see cref="Dispose"/>, you must release all references to the <see cref="T:Dapper.Database`1"/> so the garbage
-		/// collector can reclaim the memory that the <see cref="T:Dapper.Database`1"/> was occupying.</remarks>
-		public void Dispose ()
-		{
-			if (connection == null) return;
-			if (connection.State != ConnectionState.Closed) {
-				if (transaction != null) {
-					transaction.Rollback ();
-				}
-
-				connection.Close ();
-				connection = null;
-			}
-		}
-	}
+            _transaction?.Rollback();
+            _connection?.Close();
+            _connection = null;
+        }
+    }
 }
