@@ -82,7 +82,11 @@ namespace Dapper.Rainbow.MySql.Tests
         public void PageTest() => Assert.Equal(db.Profiles.Page(1, 1).Items[0].City, "Kajang");
 
         [Fact]
-        public void PageOrderTest() => Assert.Equal(db.Profiles.Page(1, 1).Items[0].City, "Kajang");
+        public void PageOrderTest()
+        {
+            var result = db.Page<Profile>("SELECT * FROM profiles ORDER BY country, city");
+            Assert.Equal(result.Items[1].City, "Kajang");
+        }
 
         [Fact]
         public void CountTest()

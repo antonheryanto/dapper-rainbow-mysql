@@ -4,13 +4,13 @@ namespace Dapper.Rainbow.MySql.Tests
 {
     public class Db : Database<Db>
     {
-        public Table<Profile> Profiles { get; set; }
+        public Table<Profile, double> Profiles { get; set; }
         public Table<ReportNote> ReportNote { get; set; }
     }
 
     public class Profile
     {
-        public int Id { get; set; }
+        public double Id { get; set; }
         public string Address { get; set; }
         public string PostCode { get; set; }
         public string City { get; set; }
