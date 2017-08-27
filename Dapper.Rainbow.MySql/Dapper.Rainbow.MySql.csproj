@@ -6,8 +6,8 @@
     <Description>Trivial micro-orm implemented on Dapper, provides with CRUD helpers specialize to handle MySql.</Description>
     <Authors>Sam Saffron; Marc Gravell; Nick Craver; Anton Heryanto</Authors>
     <Copyright>2011 - 2017 Anton Heryanto Hasan</Copyright>
-    <TargetFrameworks>net451;netstandard1.3;netstandard2.0</TargetFrameworks>
-    <VersionPrefix>0.9.0</VersionPrefix>
+    <TargetFrameworks>net45;net46;netstandard1.3;netstandard2.0</TargetFrameworks>
+    <VersionPrefix>0.9.1</VersionPrefix>
     <PackageId>Dapper.Rainbow.MySql</PackageId>
     <PackageTags>orm;sql;micro-orm;dapper;mysql</PackageTags>
     <PackageReleaseNotes>https://github.com/antonheryanto/dapper-rainbow-mysql</PackageReleaseNotes>
@@ -26,7 +26,7 @@
     <PackageReference Include="Dapper" Version="1.50.2" />
   </ItemGroup>
   
-  <ItemGroup Condition="'$(TargetFramework)' == 'net451'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net45' OR '$(TargetFramework)' == 'net46'">
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
@@ -34,11 +34,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
-    <PackageReference Include="Microsoft.CSharp" Version="4.3.0" />
-  </ItemGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.3' OR '$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="Microsoft.CSharp" Version="4.4.0" />
   </ItemGroup>
 
