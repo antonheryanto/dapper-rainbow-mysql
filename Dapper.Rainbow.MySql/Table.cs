@@ -183,7 +183,7 @@ ON DUPLICATE KEY UPDATE `{k}` = LAST_INSERT_ID(`{k}`), {cols_update}; SELECT LAS
             /// <returns></returns>
             public T Get(TId id)
             {
-                return database.Query<T>($"SELECT * FROM `{TableName}` WHERE id = @id", new { id }).FirstOrDefault();
+                return database.QueryFirstOrDefault<T>($"SELECT * FROM `{TableName}` WHERE id = @id", new { id });
             }
 
             /// <summary>
@@ -200,11 +200,11 @@ ON DUPLICATE KEY UPDATE `{k}` = LAST_INSERT_ID(`{k}`), {cols_update}; SELECT LAS
             /// <returns></returns>
             public T First(dynamic where = null)
             {
-                if (where == null) return database.Query<T>($"SELECT * FROM `{TableName}` LIMIT 1").FirstOrDefault();
+                if (where == null) return database.QueryFirstOrDefault<T>($"SELECT * FROM `{TableName}` LIMIT 1");
                 var owhere = where as object;
                 var paramNames = GetParamNames(owhere);
                 var w = string.Join(" AND ", paramNames.Select(p => $"`{p}` = @{p}"));
-                return database.Query<T>($"SELECT * FROM `{TableName}` WHERE {w} LIMIT 1", owhere).FirstOrDefault();
+                return database.QueryFirstOrDefault<T>($"SELECT * FROM `{TableName}` WHERE {w} LIMIT 1", owhere);
             }
 
             /// <summary>

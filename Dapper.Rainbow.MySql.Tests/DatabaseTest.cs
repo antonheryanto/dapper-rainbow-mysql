@@ -1,20 +1,27 @@
-using System;
-using Xunit;
+using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Configuration;
+using Xunit;
 
 namespace Dapper.Rainbow.MySql.Tests
 {
     public class DatabaseTest
     {
         readonly Db db;
+
+        public IConfigurationRoot Configuration { get; set; }
+
         public DatabaseTest()
         {
-            
-            var cs = ConfigurationManager.ConnectionStrings["MySql"].ConnectionString;
+            var builder = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json",
+                optional: true, reloadOnChange: true);
+            Configuration = builder.Build();
+
+            var cs = Configuration.GetConnectionString("db");
             var cn = new MySqlConnection(cs);
             db = Db.Init(cn, 30);
             db.Execute(@"CREATE TABLE if not exists profiles(
@@ -51,7 +58,7 @@ namespace Dapper.Rainbow.MySql.Tests
         public void Status()
         {
             Assert.False(db is null, "should be database");
-            Assert.True(db.Query("select 1").Any(), "should has value");      
+            Assert.True(db.Query("select 1").Any(), "should has value");
         }
 
         [Fact]

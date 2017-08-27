@@ -108,9 +108,9 @@ ON DUPLICATE KEY UPDATE `{k}` = LAST_INSERT_ID(`{k}`), {cols_update}; SELECT LAS
             /// </summary>
             /// <param name="id"></param>
             /// <returns></returns>
-            public async Task<T> GetAsync(TId id)
+            public Task<T> GetAsync(TId id)
             {
-                return (await database.QueryAsync<T>($"SELECT * FROM `{TableName}` WHERE id = @id", new { id }).ConfigureAwait(false)).FirstOrDefault();
+                return database.QueryFirstOrDefaultAsync<T>($"SELECT * FROM `{TableName}` WHERE id = @id", new { id });
             }
 
             /// <summary>
@@ -131,7 +131,7 @@ ON DUPLICATE KEY UPDATE `{k}` = LAST_INSERT_ID(`{k}`), {cols_update}; SELECT LAS
                 var owhere = where as object;
                 var paramNames = GetParamNames(owhere);
                 var w = string.Join(" AND ", paramNames.Select(p => $"`{p}` = @{p}"));
-                return (await database.QueryAsync<T>($"SELECT * FROM `{TableName}` WHERE {w} LIMIT 1", owhere).ConfigureAwait(false)).FirstOrDefault();
+                return await database.QueryFirstOrDefaultAsync<T>($"SELECT * FROM `{TableName}` WHERE {w} LIMIT 1", owhere);
             }
 
             /// <summary>
@@ -141,12 +141,12 @@ ON DUPLICATE KEY UPDATE `{k}` = LAST_INSERT_ID(`{k}`), {cols_update}; SELECT LAS
             /// <param name="where">Where.</param>
             public async Task<IEnumerable<T>> AllAsync(dynamic where = null)
             {
-                var sql = "SELECT * FROM " + TableName;
-                if (where == null) return (await database.QueryAsync<T>(sql).ConfigureAwait(false));
+                var sql = $"SELECT * FROM `{TableName}`";
+                if (where == null) return await database.QueryAsync<T>(sql);
 
                 var paramNames = GetParamNames((object)where);
                 var w = string.Join(" AND ", paramNames.Select(p => $"`{p}` = @{p}"));
-                return await database.QueryAsync<T>(sql + " WHERE " + w, where).ConfigureAwait(false);
+                return await database.QueryAsync<T>($"{sql} WHERE {w}", where);
             }
         }
     }

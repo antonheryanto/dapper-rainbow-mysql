@@ -1,5 +1,6 @@
 *.userprefs
 *.config
+*.json
 *.nupkg
 .vs
 .hg

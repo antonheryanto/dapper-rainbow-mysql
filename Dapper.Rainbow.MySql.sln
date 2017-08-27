@@ -4,8 +4,6 @@ VisualStudioVersion = 15.0.26730.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Rainbow.MySql", "Dapper.Rainbow.MySql\Dapper.Rainbow.MySql.csproj", "{21BC6EA8-3D10-4CC9-A1B3-9FAD59F7D1BB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", "{69560D98-B478-4C1D-9366-B1FC7890C3A7}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Rainbow.MySql.Tests", "Dapper.Rainbow.MySql.Tests\Dapper.Rainbow.MySql.Tests.csproj", "{1E09F07D-E26A-4021-B240-EF35924A5A50}"
 EndProject
 Global
@@ -30,18 +28,6 @@ Global
 		{21BC6EA8-3D10-4CC9-A1B3-9FAD59F7D1BB}.Release|x64.Build.0 = Release|Any CPU
 		{21BC6EA8-3D10-4CC9-A1B3-9FAD59F7D1BB}.Release|x86.ActiveCfg = Release|Any CPU
 		{21BC6EA8-3D10-4CC9-A1B3-9FAD59F7D1BB}.Release|x86.Build.0 = Release|Any CPU
-		{69560D98-B478-4C1D-9366-B1FC7890C3A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{69560D98-B478-4C1D-9366-B1FC7890C3A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{69560D98-B478-4C1D-9366-B1FC7890C3A7}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{69560D98-B478-4C1D-9366-B1FC7890C3A7}.Debug|x64.Build.0 = Debug|Any CPU
-		{69560D98-B478-4C1D-9366-B1FC7890C3A7}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{69560D98-B478-4C1D-9366-B1FC7890C3A7}.Debug|x86.Build.0 = Debug|Any CPU
-		{69560D98-B478-4C1D-9366-B1FC7890C3A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{69560D98-B478-4C1D-9366-B1FC7890C3A7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{69560D98-B478-4C1D-9366-B1FC7890C3A7}.Release|x64.ActiveCfg = Release|Any CPU
-		{69560D98-B478-4C1D-9366-B1FC7890C3A7}.Release|x64.Build.0 = Release|Any CPU
-		{69560D98-B478-4C1D-9366-B1FC7890C3A7}.Release|x86.ActiveCfg = Release|Any CPU
-		{69560D98-B478-4C1D-9366-B1FC7890C3A7}.Release|x86.Build.0 = Release|Any CPU
 		{1E09F07D-E26A-4021-B240-EF35924A5A50}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1E09F07D-E26A-4021-B240-EF35924A5A50}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1E09F07D-E26A-4021-B240-EF35924A5A50}.Debug|x64.ActiveCfg = Debug|Any CPU
