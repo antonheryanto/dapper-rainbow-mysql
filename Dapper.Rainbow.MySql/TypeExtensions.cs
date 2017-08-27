@@ -11,5 +11,12 @@ namespace Dapper
 #else
             type.IsGenericType;
 #endif
+
+        public static bool IsValueType(this Type type) =>
+#if NETSTANDARD1_3 || NETCOREAPP1_0
+            type.GetTypeInfo().IsValueType;
+#else
+            type.IsValueType;
+#endif
     }
 }

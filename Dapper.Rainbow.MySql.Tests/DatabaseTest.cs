@@ -10,7 +10,7 @@ namespace Dapper.Rainbow.MySql.Tests
 {
     public class DatabaseTest
     {
-        readonly Db db;
+        private readonly Db db;
 
         public IConfigurationRoot Configuration { get; set; }
 
@@ -121,9 +121,9 @@ namespace Dapper.Rainbow.MySql.Tests
         [Fact]
         public void UpdateTest()
         {
-            var city = "Bangi";
-            var id = 1;
-            var facultyId = 1;
+            const string city = "Bangi";
+            const int id = 1;
+            const int facultyId = 1;
             db.Profiles.Update(new { id, facultyId }, new { city });
             var p = db.Profiles.Get(new { id, facultyId });
             Assert.Equal(p.City, city);
@@ -167,6 +167,5 @@ namespace Dapper.Rainbow.MySql.Tests
 
         [Fact]
         public async Task FirstWhereAsyncTest() => Assert.Equal((await db.Profiles.FirstAsync(new { facultyId = 1 })).FacultyId, 1);
-
     }
 }
