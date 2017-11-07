@@ -7,7 +7,7 @@
     <Authors>Sam Saffron; Marc Gravell; Nick Craver; Anton Heryanto</Authors>
     <Copyright>2011 - 2017 Anton Heryanto Hasan</Copyright>
     <TargetFrameworks>net40;net45;net46;netstandard1.3;netstandard2.0</TargetFrameworks>
-    <VersionPrefix>0.9.2</VersionPrefix>
+    <VersionPrefix>0.10.0</VersionPrefix>
     <PackageId>Dapper.Rainbow.MySql</PackageId>
     <PackageTags>orm;sql;micro-orm;dapper;mysql</PackageTags>
     <PackageReleaseNotes>https://github.com/antonheryanto/dapper-rainbow-mysql</PackageReleaseNotes>

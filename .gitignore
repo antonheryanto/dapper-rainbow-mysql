@@ -1,3 +1,5 @@
+*.suo
+*.user
 *.userprefs
 *.config
 *.json

@@ -180,6 +180,13 @@ namespace Dapper
 		}
 	}
 
+    public class PageParser<T>
+    {
+        public Page<T> Result { get; set; }
+        public string SqlPage { get; set; }
+        public DynamicParameters PageParam { get; set; }
+    }
+
     /// <summary>
     /// Paging Class
     /// </summary>

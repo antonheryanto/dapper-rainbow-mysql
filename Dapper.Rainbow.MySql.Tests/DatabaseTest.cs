@@ -82,9 +82,19 @@ namespace Dapper.Rainbow.MySql.Tests
         public void PageTest() => Assert.Equal(db.Profiles.Page(1, 1).Items[0].City, "Kajang");
 
         [Fact]
+        public async Task PageAsyncTest() => Assert.Equal((await db.Profiles.PageAsync(1, 1)).Items[0].City, "Kajang");
+
+        [Fact]
         public void PageOrderTest()
         {
             var result = db.Page<Profile>("SELECT * FROM profiles ORDER BY country, city");
+            Assert.Equal(result.Items[1].City, "Kajang");
+        }
+
+        [Fact]
+        public async Task PageOrderAsyncTestAsync()
+        {
+            var result = await db.PageAsync<Profile>("SELECT * FROM profiles ORDER BY country, city").ConfigureAwait(false);
             Assert.Equal(result.Items[1].City, "Kajang");
         }
 
